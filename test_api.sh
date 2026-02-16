@@ -30,6 +30,7 @@ echo "Response: $ONBOARD_RES"
 echo -e "\n2. Logging in as Admin: $ADMIN_USER..."
 LOGIN_RES=$(curl -s -X POST $BASE_URL/auth/login \
   -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $SLUG" \
   -d "{
     \"username\": \"$ADMIN_USER\",
     \"password\": \"password123\"

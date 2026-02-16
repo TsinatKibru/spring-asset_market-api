@@ -45,8 +45,8 @@ public class OnboardingController {
         if (tenantRepository.existsByName(request.getCompanyName())) {
             return ResponseEntity.badRequest().body("Error: Company name is already in use!");
         }
-        if (userRepository.existsByUsername(request.getAdminUsername())) {
-            return ResponseEntity.badRequest().body("Error: Username is already taken!");
+        if (userRepository.existsByUsernameAndTenantId(request.getAdminUsername(), request.getSlug())) {
+            return ResponseEntity.badRequest().body("Error: Username is already taken in this tenant!");
         }
 
         // 2. Create Tenant

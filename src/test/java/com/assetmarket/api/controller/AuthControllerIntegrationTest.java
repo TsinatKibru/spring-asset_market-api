@@ -50,6 +50,7 @@ public class AuthControllerIntegrationTest {
         loginRequest.setPassword("password123");
 
         mockMvc.perform(post("/api/v1/auth/login")
+                .header("X-Tenant-ID", onboardingRequest.getSlug())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk());

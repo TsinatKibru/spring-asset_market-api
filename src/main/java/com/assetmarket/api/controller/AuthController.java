@@ -41,29 +41,39 @@ public class AuthController {
     JwtUtils jwtUtils;
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,
+            @RequestHeader(value = "X-Tenant-ID", required = false) String tenantIdHeader) {
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        if (tenantIdHeader != null) {
+            com.assetmarket.api.security.TenantContext.setCurrentTenant(tenantIdHeader);
+        }
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
-        org.springframework.security.core.userdetails.User userDetails = (org.springframework.security.core.userdetails.User) authentication
-                .getPrincipal();
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication);
 
-        User user = userRepository.findByUsername(userDetails.getUsername()).get();
+            org.springframework.security.core.userdetails.User userDetails = (org.springframework.security.core.userdetails.User) authentication
+                    .getPrincipal();
 
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
+            User user = userRepository.findByUsernameAndTenantId(userDetails.getUsername(),
+                    com.assetmarket.api.security.TenantContext.getCurrentTenant()).get();
 
-        return ResponseEntity.ok(new JwtResponse(jwt,
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getTenantId(),
-                roles));
+            List<String> roles = userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(new JwtResponse(jwt,
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getTenantId(),
+                    roles));
+        } finally {
+            com.assetmarket.api.security.TenantContext.clear();
+        }
     }
 
     @PostMapping("/register")
@@ -72,12 +82,12 @@ public class AuthController {
         // Get current admin's tenant ID
         String currentTenant = com.assetmarket.api.security.TenantContext.getCurrentTenant();
 
-        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-            return ResponseEntity.badRequest().body("Error: Username is already taken!");
+        if (userRepository.existsByUsernameAndTenantId(signUpRequest.getUsername(), currentTenant)) {
+            return ResponseEntity.badRequest().body("Error: Username is already taken in this tenant!");
         }
 
-        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return ResponseEntity.badRequest().body("Error: Email is already in use!");
+        if (userRepository.existsByEmailAndTenantId(signUpRequest.getEmail(), currentTenant)) {
+            return ResponseEntity.badRequest().body("Error: Email is already in use in this tenant!");
         }
 
         // Create new user's account with the same tenantId as the admin
