@@ -24,14 +24,35 @@ public class TenantFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String tenantId = null;
+
+        // 1. Try to get tenantId from Authenticated Principal (JWT)
         Object principal = SecurityContextHolder.getContext().getAuthentication() != null
                 ? SecurityContextHolder.getContext().getAuthentication().getPrincipal()
                 : null;
 
         if (principal instanceof UserDetails userDetails) {
-            userRepository.findByUsername(userDetails.getUsername()).ifPresent(user -> {
-                TenantContext.setCurrentTenant(user.getTenantId());
-            });
+            User user = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+            if (user != null) {
+                tenantId = user.getTenantId();
+            }
+        }
+
+        // 2. Fallback to Header if unauthenticated (Public Access)
+        if (tenantId == null) {
+            tenantId = request.getHeader("X-Tenant-ID");
+        }
+
+        // 3. Validation: If accessing property/category data, tenantId MUST be present
+        String path = request.getRequestURI();
+        if (tenantId == null && (path.startsWith("/api/v1/properties") || path.startsWith("/api/v1/categories"))) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("Error: Tenant Identification (JWT or X-Tenant-ID header) is required.");
+            return;
+        }
+
+        if (tenantId != null) {
+            TenantContext.setCurrentTenant(tenantId);
         }
 
         try {

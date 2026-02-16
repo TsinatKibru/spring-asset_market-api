@@ -71,6 +71,9 @@ echo "Response: $PROP_RES"
 echo -e "\n5. Fetching all properties..."
 GET_RES=$(curl -s -X GET $BASE_URL/properties \
   -H "Authorization: Bearer $TOKEN")
-echo "Response: $GET_RES"
+echo -e "\n6. Public viewing (No login, only Header)..."
+PUBLIC_RES=$(curl -s -X GET $BASE_URL/properties \
+  -H "X-Tenant-ID: $SLUG")
+echo "Response: $PUBLIC_RES"
 
 echo -e "\n--- Test Complete ---"
