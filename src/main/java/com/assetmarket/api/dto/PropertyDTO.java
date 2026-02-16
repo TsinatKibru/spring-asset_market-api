@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Data
 public class PropertyDTO {
@@ -24,4 +25,6 @@ public class PropertyDTO {
     private String location;
 
     private String categoryName;
+
+    private Map<String, Object> attributes;
 }

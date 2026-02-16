@@ -40,6 +40,14 @@ public class CategoryController {
         Category category = Category.builder()
                 .name(categoryDTO.getName())
                 .description(categoryDTO.getDescription())
+                .attributeSchema(categoryDTO.getAttributeSchema() != null ? categoryDTO.getAttributeSchema().stream()
+                        .map(s -> {
+                            java.util.Map<String, Object> map = new java.util.HashMap<>();
+                            map.put("name", s.getName());
+                            map.put("type", s.getType());
+                            map.put("required", s.isRequired());
+                            return map;
+                        }).collect(Collectors.toList()) : null)
                 .tenantId(TenantContext.getCurrentTenant())
                 .build();
 
@@ -52,6 +60,12 @@ public class CategoryController {
                 .id(category.getId())
                 .name(category.getName())
                 .description(category.getDescription())
+                .attributeSchema(category.getAttributeSchema() != null ? category.getAttributeSchema().stream()
+                        .map(m -> new com.assetmarket.api.dto.AttributeSchemaDTO(
+                                (String) m.get("name"),
+                                (String) m.get("type"),
+                                m.get("required") != null && (boolean) m.get("required")))
+                        .collect(Collectors.toList()) : null)
                 .build();
     }
 }

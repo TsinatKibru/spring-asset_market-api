@@ -43,17 +43,73 @@ public class PropertyService {
                     return categoryRepository.save(newCategory);
                 });
 
+        // Validation logic
+        validateAttributes(propertyDTO.getAttributes(), category.getAttributeSchema());
+
         Property property = Property.builder()
                 .title(propertyDTO.getTitle())
                 .description(propertyDTO.getDescription())
                 .price(propertyDTO.getPrice())
                 .location(propertyDTO.getLocation())
                 .category(category)
+                .attributes(propertyDTO.getAttributes())
                 .tenantId(TenantContext.getCurrentTenant())
                 .build();
 
         Property savedProperty = propertyRepository.save(property);
         return convertToDTO(savedProperty);
+    }
+
+    private void validateAttributes(java.util.Map<String, Object> attributes,
+            java.util.List<java.util.Map<String, Object>> schema) {
+        if (schema == null || schema.isEmpty())
+            return;
+        if (attributes == null)
+            attributes = new java.util.HashMap<>();
+
+        for (java.util.Map<String, Object> fieldSchema : schema) {
+            String name = (String) fieldSchema.get("name");
+            String type = (String) fieldSchema.get("type");
+            boolean required = fieldSchema.get("required") != null && (boolean) fieldSchema.get("required");
+
+            Object value = attributes.get(name);
+
+            if (required && value == null) {
+                throw new IllegalArgumentException("Metadata field '" + name + "' is required for this category.");
+            }
+
+            if (value != null) {
+                validateType(name, value, type);
+            }
+        }
+
+        // Strict Check: No unknown fields
+        for (String key : attributes.keySet()) {
+            boolean known = schema.stream().anyMatch(f -> f.get("name").equals(key));
+            if (!known) {
+                throw new IllegalArgumentException("Metadata field '" + key + "' is not recognized for this category.");
+            }
+        }
+    }
+
+    private void validateType(String name, Object value, String expectedType) {
+        switch (expectedType.toLowerCase()) {
+            case "number" -> {
+                if (!(value instanceof Number)) {
+                    throw new IllegalArgumentException("Field '" + name + "' must be a number.");
+                }
+            }
+            case "boolean" -> {
+                if (!(value instanceof Boolean)) {
+                    throw new IllegalArgumentException("Field '" + name + "' must be a boolean.");
+                }
+            }
+            case "string" -> {
+                if (!(value instanceof String)) {
+                    throw new IllegalArgumentException("Field '" + name + "' must be a string.");
+                }
+            }
+        }
     }
 
     private PropertyDTO convertToDTO(Property property) {
@@ -63,6 +119,7 @@ public class PropertyService {
         dto.setDescription(property.getDescription());
         dto.setPrice(property.getPrice());
         dto.setLocation(property.getLocation());
+        dto.setAttributes(property.getAttributes());
         if (property.getCategory() != null) {
             dto.setCategoryName(property.getCategory().getName());
         }

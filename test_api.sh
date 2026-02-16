@@ -55,23 +55,57 @@ REG_RES=$(curl -s -X POST $BASE_URL/auth/register \
   }")
 echo "Response: $REG_RES"
 
-echo -e "\n4. Creating a property (as Admin)..."
+echo -e "\n4. Creating Category with Metadata Schema..."
+# This category requires 'rooms' (number)
+CAT_RES=$(curl -s -X POST $BASE_URL/categories \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Residential",
+    "description": "Housing properties",
+    "attributeSchema": [
+      {"name": "rooms", "type": "number", "required": true},
+      {"name": "parking", "type": "boolean", "required": false}
+    ]
+  }')
+echo "Response: $CAT_RES"
+
+echo -e "\n5. Creating Property with Missing Metadata (Failure)..."
+# Missing "rooms"
+FAIL_RES=$(curl -s -X POST $BASE_URL/properties \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Invalid House",
+    "price": 300000,
+    "location": "Validation Blvd",
+    "categoryName": "Residential",
+    "attributes": {
+      "parking": true
+    }
+  }')
+echo "Response (Should be 400): $FAIL_RES"
+
+echo -e "\n6. Creating Property with Metadata (Success)..."
 PROP_RES=$(curl -s -X POST $BASE_URL/properties \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "title": "SaaS Test Property",
-    "description": "Created via onboarding flow",
-    "price": 500000.00,
-    "location": "New York, USA",
-    "categoryName": "Commercial"
+    "title": "Modern Villa",
+    "price": 750000,
+    "location": "Sunset Blvd",
+    "categoryName": "Residential",
+    "attributes": {
+      "rooms": 4,
+      "parking": true
+    }
   }')
 echo "Response: $PROP_RES"
 
-echo -e "\n5. Fetching all properties..."
+echo -e "\n7. Fetching all properties..."
 GET_RES=$(curl -s -X GET $BASE_URL/properties \
   -H "Authorization: Bearer $TOKEN")
-echo -e "\n6. Public viewing (No login, only Header)..."
+echo -e "\n8. Public viewing (No login, only Header)..."
 PUBLIC_RES=$(curl -s -X GET $BASE_URL/properties \
   -H "X-Tenant-ID: $SLUG")
 echo "Response: $PUBLIC_RES"
