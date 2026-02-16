@@ -1,7 +1,7 @@
 package com.assetmarket.api.controller;
 
 import com.assetmarket.api.dto.LoginRequest;
-import com.assetmarket.api.dto.SignupRequest;
+import com.assetmarket.api.dto.OnboardingRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,21 +26,27 @@ public class AuthControllerIntegrationTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void shouldRegisterAndLoginUser() throws Exception {
-        SignupRequest signupRequest = new SignupRequest();
-        String uniqueUser = "user_" + System.currentTimeMillis();
-        signupRequest.setUsername(uniqueUser);
-        signupRequest.setEmail(uniqueUser + "@example.com");
-        signupRequest.setPassword("password123");
-        signupRequest.setTenantId("tenant-1");
+    void shouldOnboardCompanyAndLoginAdmin() throws Exception {
+        // Use shorter unique ID to satisfy @Size(max = 20) constraints
+        String uniqueId = "t" + (System.currentTimeMillis() % 1000000);
 
-        mockMvc.perform(post("/api/v1/auth/register")
+        // 1. Onboard
+        OnboardingRequest onboardingRequest = OnboardingRequest.builder()
+                .companyName("Company " + uniqueId)
+                .slug("slug" + uniqueId)
+                .adminUsername("admin" + uniqueId)
+                .adminEmail("admin" + uniqueId + "@example.com")
+                .adminPassword("password123")
+                .build();
+
+        mockMvc.perform(post("/api/v1/onboard")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(signupRequest)))
+                .content(objectMapper.writeValueAsString(onboardingRequest)))
                 .andExpect(status().isOk());
 
+        // 2. Login
         LoginRequest loginRequest = new LoginRequest();
-        loginRequest.setUsername(uniqueUser);
+        loginRequest.setUsername("admin" + uniqueId);
         loginRequest.setPassword("password123");
 
         mockMvc.perform(post("/api/v1/auth/login")

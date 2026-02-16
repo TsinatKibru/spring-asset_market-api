@@ -22,8 +22,5 @@ public class SignupRequest {
     @Size(min = 6, max = 40)
     private String password;
 
-    @NotBlank
-    private String tenantId;
-
     private Set<String> roles;
 }

@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashSet;
@@ -66,7 +67,11 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
+        // Get current admin's tenant ID
+        String currentTenant = com.assetmarket.api.security.TenantContext.getCurrentTenant();
+
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
             return ResponseEntity.badRequest().body("Error: Username is already taken!");
         }
@@ -75,12 +80,12 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error: Email is already in use!");
         }
 
-        // Create new user's account
+        // Create new user's account with the same tenantId as the admin
         User user = User.builder()
                 .username(signUpRequest.getUsername())
                 .email(signUpRequest.getEmail())
                 .password(encoder.encode(signUpRequest.getPassword()))
-                .tenantId(signUpRequest.getTenantId())
+                .tenantId(currentTenant)
                 .build();
 
         Set<String> strRoles = signUpRequest.getRoles();
