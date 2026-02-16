@@ -4,7 +4,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-latest-blue)
 ![JWT](https://img.shields.io/badge/JWT-jjwt-orange)
 
-A production-grade, interview-ready REST API for a property marketplace, featuring robust multi-tenancy isolation and JWT security.
+A production-grade REST API for a property marketplace, featuring robust multi-tenancy isolation and JWT security.
 
 ## 🚀 Key Features
 - **Stateless JWT Security**: Secure authentication and role-based authorization.
