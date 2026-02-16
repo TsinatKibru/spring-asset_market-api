@@ -47,6 +47,7 @@ echo "Login successful. Token retrieved."
 echo -e "\n3. Admin registering a staff user: $STAFF_USER..."
 REG_RES=$(curl -s -X POST $BASE_URL/auth/register \
   -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $SLUG" \
   -H "Content-Type: application/json" \
   -d "{
     \"username\": \"$STAFF_USER\",
@@ -60,6 +61,7 @@ echo -e "\n4. Creating Category with Metadata Schema..."
 # This category requires 'rooms' (number)
 CAT_RES=$(curl -s -X POST $BASE_URL/categories \
   -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $SLUG" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Residential",
@@ -75,6 +77,7 @@ echo -e "\n5. Creating Property with Missing Metadata (Failure)..."
 # Missing "rooms"
 FAIL_RES=$(curl -s -X POST $BASE_URL/properties \
   -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $SLUG" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Invalid House",
@@ -90,6 +93,7 @@ echo "Response (Should be 400): $FAIL_RES"
 echo -e "\n6. Creating Property with Metadata (Success)..."
 PROP_RES=$(curl -s -X POST $BASE_URL/properties \
   -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $SLUG" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Modern Villa",
@@ -105,7 +109,10 @@ echo "Response: $PROP_RES"
 
 echo -e "\n7. Fetching all properties..."
 GET_RES=$(curl -s -X GET $BASE_URL/properties \
-  -H "Authorization: Bearer $TOKEN")
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $SLUG")
+echo "Response: $GET_RES"
+
 echo -e "\n8. Public viewing (No login, only Header)..."
 PUBLIC_RES=$(curl -s -X GET $BASE_URL/properties \
   -H "X-Tenant-ID: $SLUG")

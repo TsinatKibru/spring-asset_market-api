@@ -42,11 +42,12 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,
-            @RequestHeader(value = "X-Tenant-ID", required = false) String tenantIdHeader) {
+            @RequestHeader(value = "X-Tenant-ID", required = true) String tenantIdHeader) {
 
-        if (tenantIdHeader != null) {
-            com.assetmarket.api.security.TenantContext.setCurrentTenant(tenantIdHeader);
+        if (tenantIdHeader == null || tenantIdHeader.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Error: X-Tenant-ID header is required");
         }
+        com.assetmarket.api.security.TenantContext.setCurrentTenant(tenantIdHeader);
 
         try {
             Authentication authentication = authenticationManager.authenticate(

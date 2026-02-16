@@ -35,15 +35,15 @@ public class PropertyService {
     @Transactional
     public PropertyDTO createProperty(PropertyDTO propertyDTO) {
         Category category = categoryRepository.findByName(propertyDTO.getCategoryName())
-                .orElseGet(() -> {
-                    Category newCategory = Category.builder()
-                            .name(propertyDTO.getCategoryName())
-                            .tenantId(TenantContext.getCurrentTenant())
-                            .build();
-                    return categoryRepository.save(newCategory);
-                });
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Category not found: " + propertyDTO.getCategoryName()));
 
         // Validation logic
+        if (category.getAttributeSchema() == null || category.getAttributeSchema().isEmpty()) {
+            throw new IllegalArgumentException("Category '" + category.getName()
+                    + "' has no validation schema defined. Please update the category first.");
+        }
+
         validateAttributes(propertyDTO.getAttributes(), category.getAttributeSchema());
 
         Property property = Property.builder()
@@ -124,5 +124,17 @@ public class PropertyService {
             dto.setCategoryName(property.getCategory().getName());
         }
         return dto;
+    }
+
+    public void deleteProperty(Long id) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Property not found"));
+
+        // Tenant check
+        if (!property.getTenantId().equals(com.assetmarket.api.security.TenantContext.getCurrentTenant())) {
+            throw new IllegalArgumentException("Property not found in this tenant");
+        }
+
+        propertyRepository.delete(property);
     }
 }

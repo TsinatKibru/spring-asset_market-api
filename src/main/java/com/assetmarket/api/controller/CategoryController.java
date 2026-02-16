@@ -37,6 +37,11 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new category", description = "Allows administrators to create new property categories")
     public ResponseEntity<CategoryDTO> createCategory(@Valid @RequestBody CategoryDTO categoryDTO) {
+        if (categoryRepository.existsByNameAndTenantId(categoryDTO.getName(), TenantContext.getCurrentTenant())) {
+            throw new IllegalArgumentException(
+                    "Category with name '" + categoryDTO.getName() + "' already exists in this tenant.");
+        }
+
         Category category = Category.builder()
                 .name(categoryDTO.getName())
                 .description(categoryDTO.getDescription())
@@ -53,6 +58,49 @@ public class CategoryController {
 
         Category savedCategory = categoryRepository.save(category);
         return new ResponseEntity<>(convertToDTO(savedCategory), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update a category", description = "Update an existing category's name, description, and schema")
+    public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id,
+            @Valid @RequestBody CategoryDTO categoryDTO) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+
+        // Tenant check is handled by Hibernate Filter, but good transparency here:
+        if (!category.getTenantId().equals(TenantContext.getCurrentTenant())) {
+            throw new IllegalArgumentException("Category not found in this tenant");
+        }
+
+        category.setName(categoryDTO.getName());
+        category.setDescription(categoryDTO.getDescription());
+        category.setAttributeSchema(categoryDTO.getAttributeSchema() != null ? categoryDTO.getAttributeSchema().stream()
+                .map(s -> {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("name", s.getName());
+                    map.put("type", s.getType());
+                    map.put("required", s.isRequired());
+                    return map;
+                }).collect(Collectors.toList()) : null);
+
+        Category updatedCategory = categoryRepository.save(category);
+        return ResponseEntity.ok(convertToDTO(updatedCategory));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete a category", description = "Delete a category. Warning: Will fail if properties are linked.")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+
+        if (!category.getTenantId().equals(TenantContext.getCurrentTenant())) {
+            throw new IllegalArgumentException("Category not found in this tenant");
+        }
+
+        categoryRepository.delete(category);
+        return ResponseEntity.noContent().build();
     }
 
     private CategoryDTO convertToDTO(Category category) {

@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 @Entity
-@Table(name = "categories")
+@Table(name = "categories", uniqueConstraints = {
+        @UniqueConstraint(columnNames = { "name", "tenant_id" })
+})
 @Getter
 @Setter
 @SuperBuilder

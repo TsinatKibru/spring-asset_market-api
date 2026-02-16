@@ -43,7 +43,11 @@ public class OpenApiConfig {
                                 .in("header")
                                 .name("X-Tenant-ID")
                                 .description(
-                                        "Tenant Identifier (e.g. 'mega-realty'). Required for discovery (unauthenticated GET) and Authentication (Login).")
+                                        "Tenant Identifier (e.g. 'mega-realty').\n\n" +
+                                                "**REQUIRED** for:\n" +
+                                                "1. Public/Unauthenticated access.\n" +
+                                                "2. Login requests.\n\n" +
+                                                "**OPTIONAL** if a valid Bearer Token is provided (tenant context is extracted from JWT).")
                                 .required(false)
                                 .schema(new StringSchema())));
     }
@@ -51,12 +55,17 @@ public class OpenApiConfig {
     @Bean
     public OperationCustomizer customize() {
         return (operation, handlerMethod) -> {
-            operation.addParametersItem(new Parameter()
-                    .in("header")
-                    .name("X-Tenant-ID")
-                    .description("Tenant ID for scoping requests")
-                    .required(false)
-                    .schema(new StringSchema()));
+            boolean headerExists = operation.getParameters() != null && operation.getParameters().stream()
+                    .anyMatch(p -> "X-Tenant-ID".equals(p.getName()));
+
+            if (!headerExists) {
+                operation.addParametersItem(new Parameter()
+                        .in("header")
+                        .name("X-Tenant-ID")
+                        .description("Tenant ID for scoping requests")
+                        .required(false)
+                        .schema(new StringSchema()));
+            }
             return operation;
         };
     }
