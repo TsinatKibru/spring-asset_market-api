@@ -10,10 +10,12 @@ A production-grade REST API for a property marketplace, featuring robust multi-t
 ## 🚀 Key Features
 
 ### Core Functionality
-- **Property Management**: Full CRUD operations for properties with dynamic attributes
+- **Property Management**: Full CRUD operations for properties with dynamic status and images
 - **Category System**: Flexible category management with JSON schema validation
 - **Dynamic Metadata**: JSONB-based attribute system with runtime validation
-- **Search & Filtering**: Paginated property listings with category filtering
+- **Advanced Search**: High-performance filtering by price, location, status, and dynamic attributes
+- **Favorites System**: User-specific saved properties with tenant isolation
+- **Messaging & Inquiries**: Secure property-linked communication between buyers and merchants
 
 ### Security & Multi-tenancy
 - **Stateless JWT Security**: Secure authentication and role-based authorization (USER, ADMIN)
@@ -50,10 +52,15 @@ A production-grade REST API for a property marketplace, featuring robust multi-t
 - `DELETE /api/v1/categories/{id}` - Delete category (admin only)
 
 ### Properties
-- `GET /api/v1/properties` - List properties (public, supports filtering)
-- `POST /api/v1/properties` - Create property (admin only)
-- `PUT /api/v1/properties/{id}` - Update property (admin only) ✨ **NEW**
+- `PUT /api/v1/properties/{id}` - Update property (admin only)
+- `POST /api/v1/properties/{id}/images` - Upload images (admin only) ✨ **NEW**
 - `DELETE /api/v1/properties/{id}` - Delete property (admin only)
+
+### Favorites & Messaging ✨ **NEW**
+- `POST /api/v1/favorites/{id}` - Toggle favorite status
+- `GET /api/v1/favorites` - List user's saved properties
+- `POST /api/v1/messages/inquiry` - Send property inquiry
+- `GET /api/v1/messages/thread/{id}` - View conversation thread
 
 ## 🏃 Getting Started
 
@@ -108,6 +115,9 @@ The project includes comprehensive integration tests:
 
 ### Test Coverage
 - **PropertyUpdateIntegrationTest**: 9 tests for property updates
+- **FavoriteIntegrationTest**: Scoped favorites and tenant isolation
+- **MessageIntegrationTest**: End-to-end inquiry flow and security
+- **ImageUploadIntegrationTest**: Multi-tenant image management
 - **CategoryUpdateIntegrationTest**: Category schema updates
 - **MetadataValidationIntegrationTest**: Dynamic attribute validation
 - **PropertyRepositoryIsolationTest**: Multi-tenant isolation
