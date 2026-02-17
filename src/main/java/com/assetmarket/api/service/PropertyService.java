@@ -32,6 +32,27 @@ public class PropertyService {
         return properties.map(this::convertToDTO);
     }
 
+    @Transactional(readOnly = true)
+    public Page<PropertyDTO> searchProperties(
+            java.math.BigDecimal minPrice,
+            java.math.BigDecimal maxPrice,
+            String location,
+            String categoryName,
+            Pageable pageable) {
+
+        Long categoryId = null;
+        if (categoryName != null && !categoryName.isEmpty()) {
+            Category category = categoryRepository.findByName(categoryName)
+                    .orElseThrow(() -> new IllegalArgumentException("Category not found: " + categoryName));
+            categoryId = category.getId();
+        }
+
+        Page<Property> properties = propertyRepository.findWithFilters(
+                minPrice, maxPrice, location, categoryId, pageable);
+
+        return properties.map(this::convertToDTO);
+    }
+
     @Transactional
     public PropertyDTO createProperty(PropertyDTO propertyDTO) {
         Category category = categoryRepository.findByName(propertyDTO.getCategoryName())

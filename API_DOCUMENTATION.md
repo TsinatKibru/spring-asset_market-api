@@ -322,7 +322,12 @@ X-Tenant-ID: your-tenant-slug
 **Query Parameters**:
 - `page` (default: 0)
 - `size` (default: 20)
-- `category` (optional filter)
+- `category` (optional) - Filter by category name
+- `minPrice` (optional) - Minimum price
+- `maxPrice` (optional) - Maximum price
+- `location` (optional) - Search location (partial match, case-insensitive)
+- `sortBy` (default: "createdAt") - Field to sort by (`price`, `title`, `location`, `createdAt`)
+- `sortDir` (default: "DESC") - Sort direction (`ASC`, `DESC`)
 
 **Headers** (optional for public access):
 ```
@@ -349,6 +354,11 @@ X-Tenant-ID: your-tenant-slug
     }
   ],
   "pageable": {
+    "sort": {
+      "sorted": true,
+      "unsorted": false,
+      "empty": false
+    },
     "pageNumber": 0,
     "pageSize": 20
   },
@@ -357,9 +367,29 @@ X-Tenant-ID: your-tenant-slug
 }
 ```
 
-**Example with filtering**:
+**Search Examples**:
+
+1. **Price Range**:
 ```bash
-curl -X GET "http://localhost:8080/api/v1/properties?category=Residential&page=0&size=10" \
+curl -X GET "http://localhost:8080/api/v1/properties?minPrice=300000&maxPrice=600000" \
+  -H "X-Tenant-ID: acme-corp"
+```
+
+2. **Location Search**:
+```bash
+curl -X GET "http://localhost:8080/api/v1/properties?location=Downtown" \
+  -H "X-Tenant-ID: acme-corp"
+```
+
+3. **Sorting by Price**:
+```bash
+curl -X GET "http://localhost:8080/api/v1/properties?sortBy=price&sortDir=ASC" \
+  -H "X-Tenant-ID: acme-corp"
+```
+
+4. **Complex Filter**:
+```bash
+curl -X GET "http://localhost:8080/api/v1/properties?category=Residential&minPrice=200000&location=Main&sortBy=title&sortDir=ASC&page=0&size=10" \
   -H "X-Tenant-ID: acme-corp"
 ```
 

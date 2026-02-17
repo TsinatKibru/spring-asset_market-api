@@ -20,13 +20,36 @@ public class PropertyController {
     private PropertyService propertyService;
 
     @GetMapping
+    @io.swagger.v3.oas.annotations.Operation(summary = "Search properties with filters and sorting", description = "Search properties by price range, location, category with sorting options")
     public ResponseEntity<Page<PropertyDTO>> getAllProperties(
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) java.math.BigDecimal minPrice,
+            @RequestParam(required = false) java.math.BigDecimal maxPrice,
+            @RequestParam(required = false) String location,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "20") int size) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(propertyService.getAllProperties(category, pageable));
+        // Build Sort object
+        org.springframework.data.domain.Sort.Direction direction = sortDir.equalsIgnoreCase("ASC")
+                ? org.springframework.data.domain.Sort.Direction.ASC
+                : org.springframework.data.domain.Sort.Direction.DESC;
+
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(direction, sortBy);
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Use search method if any filters are provided
+        Page<PropertyDTO> properties;
+        if (minPrice != null || maxPrice != null || location != null) {
+            properties = propertyService.searchProperties(
+                    minPrice, maxPrice, location, category, pageable);
+        } else {
+            properties = propertyService.getAllProperties(category, pageable);
+        }
+
+        return ResponseEntity.ok(properties);
     }
 
     @PostMapping
