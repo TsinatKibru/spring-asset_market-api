@@ -596,6 +596,67 @@ Returns a paginated list of `PropertyDTO`s favorited by the current user.
 
 ---
 
+### Property Viewing Scheduler ✨ NEW
+
+#### 1. Request a Viewing
+**Endpoint**: `POST /api/v1/viewings/request`
+**Auth**: Registered User
+**X-Tenant-ID**: Required
+
+**Request**:
+```json
+{
+  "propertyId": 1,
+  "requestedAt": "2026-03-20T14:30:00",
+  "notes": "Interested in seeing the garden"
+}
+```
+
+**Notes**:
+- Automatically posts a system message in the property's inquiry thread.
+
+#### 2. Update Viewing Status
+**Endpoint**: `PATCH /api/v1/viewings/{id}/status`
+**Auth**: User (Cancel) / Admin (Approve/Reject)
+**X-Tenant-ID**: Required
+
+**Query Parameters**:
+- `status`: One of `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`, `COMPLETED`.
+
+#### 3. List My/Merchant Viewings
+**Endpoints**: 
+- `GET /api/v1/viewings/my` (User's own requests)
+- `GET /api/v1/viewings/merchant` (Admin's property list)
+
+---
+
+### Property Reviews & Ratings ✨ NEW
+
+#### 1. Leave a Review
+**Endpoint**: `POST /api/v1/reviews`
+**Auth**: Registered User (Verified Only)
+**X-Tenant-ID**: Required
+
+**Request**:
+```json
+{
+  "propertyId": 1,
+  "rating": 5,
+  "comment": "Exceptional property and service!"
+}
+```
+
+**Verified Status**:
+- User must have a prior **Inquiry** (Message) or **Viewing Request** for the property.
+- Only one review allowed per user per property.
+
+#### 2. Get Property Reviews
+**Endpoint**: `GET /api/v1/reviews/property/{propertyId}`
+**Auth**: Public / Registered User
+**X-Tenant-ID**: Required
+
+---
+
 ### Delete Property
 
 **Endpoint**: `DELETE /properties/{id}` (Admin only)

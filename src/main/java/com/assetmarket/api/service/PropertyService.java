@@ -22,6 +22,9 @@ public class PropertyService {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private com.assetmarket.api.repository.ReviewRepository reviewRepository;
+
     @Transactional(readOnly = true)
     public Page<PropertyDTO> getAllProperties(String category, Pageable pageable) {
         Page<Property> properties;
@@ -172,13 +175,17 @@ public class PropertyService {
         dto.setDescription(property.getDescription());
         dto.setPrice(property.getPrice());
         dto.setLocation(property.getLocation());
+        dto.setCreatedAt(property.getCreatedAt());
+        dto.setUpdatedAt(property.getUpdatedAt());
         dto.setStatus(property.getStatus());
-        dto.setImageUrls(property.getImageUrls() != null ? new java.util.ArrayList<>(property.getImageUrls())
-                : new java.util.ArrayList<>());
+        dto.setImageUrls(property.getImageUrls());
+        dto.setCategoryName(property.getCategory() != null ? property.getCategory().getName() : null);
         dto.setAttributes(property.getAttributes());
-        if (property.getCategory() != null) {
-            dto.setCategoryName(property.getCategory().getName());
-        }
+
+        // Attach ratings
+        dto.setAverageRating(reviewRepository.getAverageRatingForProperty(property.getId()));
+        dto.setReviewCount(reviewRepository.countByPropertyId(property.getId()));
+
         return dto;
     }
 

@@ -36,4 +36,10 @@ public class PropertyDTO {
 
     @Schema(description = "Dynamic attributes based on the category's schema", example = "{\"bedrooms\": 3, \"hasGarage\": true}")
     private Map<String, Object> attributes;
+
+    private Double averageRating;
+    private Long reviewCount;
+
+    private java.time.LocalDateTime createdAt;
+    private java.time.LocalDateTime updatedAt;
 }

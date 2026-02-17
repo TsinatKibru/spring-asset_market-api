@@ -22,9 +22,11 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
         Page<Property> findInquiredProperties(@Param("userId") Long userId, @Param("tenantId") String tenantId,
                         Pageable pageable);
 
-        // List all inquiries for a property (Admin view)
         @Query("SELECT m FROM Message m WHERE m.property.id = :propertyId AND m.tenantId = :tenantId ORDER BY m.createdAt DESC")
         Page<Message> findByPropertyAndTenantId(@Param("propertyId") Long propertyId,
                         @Param("tenantId") String tenantId,
                         Pageable pageable);
+
+        boolean existsByPropertyAndSender(com.assetmarket.api.entity.Property property,
+                        com.assetmarket.api.entity.User sender);
 }
