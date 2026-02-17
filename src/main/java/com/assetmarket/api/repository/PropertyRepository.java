@@ -14,16 +14,29 @@ import java.math.BigDecimal;
 public interface PropertyRepository extends JpaRepository<Property, Long> {
         Page<Property> findByCategoryName(String name, Pageable pageable);
 
-        @Query("SELECT p FROM Property p WHERE " +
+        @Query(value = "SELECT * FROM properties p WHERE " +
                         "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
                         "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
-                        "(:location IS NULL OR LOWER(p.location) LIKE LOWER(CONCAT('%', CAST(:location AS string), '%'))) AND "
-                        +
-                        "(:categoryId IS NULL OR p.category.id = :categoryId)")
+                        "(:location IS NULL OR p.location ILIKE CONCAT('%', :location, '%')) AND " +
+                        "(:categoryId IS NULL OR p.category_id = :categoryId) AND " +
+                        "(:status IS NULL OR p.status = :status) AND " +
+                        "(:attrKey IS NULL OR p.attributes->>:attrKey = :attrValue) AND " +
+                        "p.tenant_id = :tenantId", countQuery = "SELECT count(*) FROM properties p WHERE " +
+                                        "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
+                                        "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
+                                        "(:location IS NULL OR p.location ILIKE CONCAT('%', :location, '%')) AND " +
+                                        "(:categoryId IS NULL OR p.category_id = :categoryId) AND " +
+                                        "(:status IS NULL OR p.status = :status) AND " +
+                                        "(:attrKey IS NULL OR p.attributes->>:attrKey = :attrValue) AND " +
+                                        "p.tenant_id = :tenantId", nativeQuery = true)
         Page<Property> findWithFilters(
                         @Param("minPrice") BigDecimal minPrice,
                         @Param("maxPrice") BigDecimal maxPrice,
                         @Param("location") String location,
                         @Param("categoryId") Long categoryId,
+                        @Param("status") String status,
+                        @Param("attrKey") String attrKey,
+                        @Param("attrValue") String attrValue,
+                        @Param("tenantId") String tenantId,
                         Pageable pageable);
 }

@@ -29,6 +29,11 @@ public class PropertyDTO {
     @Schema(description = "Name of the existing category this property belongs to", example = "Residential")
     private String categoryName;
 
+    @Schema(description = "Current status of the property", example = "AVAILABLE")
+    private com.assetmarket.api.entity.PropertyStatus status;
+
+    private java.util.List<String> imageUrls;
+
     @Schema(description = "Dynamic attributes based on the category's schema", example = "{\"bedrooms\": 3, \"hasGarage\": true}")
     private Map<String, Object> attributes;
 }

@@ -326,6 +326,9 @@ X-Tenant-ID: your-tenant-slug
 - `minPrice` (optional) - Minimum price
 - `maxPrice` (optional) - Maximum price
 - `location` (optional) - Search location (partial match, case-insensitive)
+- `status` (optional) - Property status (`AVAILABLE`, `PENDING`, `SOLD`)
+- `attrKey` (optional) - Dynamic attribute key to filter by
+- `attrValue` (optional) - Exact value for the dynamic attribute
 - `sortBy` (default: "createdAt") - Field to sort by (`price`, `title`, `location`, `createdAt`)
 - `sortDir` (default: "DESC") - Sort direction (`ASC`, `DESC`)
 
@@ -390,6 +393,12 @@ curl -X GET "http://localhost:8080/api/v1/properties?sortBy=price&sortDir=ASC" \
 4. **Complex Filter**:
 ```bash
 curl -X GET "http://localhost:8080/api/v1/properties?category=Residential&minPrice=200000&location=Main&sortBy=title&sortDir=ASC&page=0&size=10" \
+  -H "X-Tenant-ID: acme-corp"
+```
+
+5. **Filter by Status & Attributes**:
+```bash
+curl -X GET "http://localhost:8080/api/v1/properties?status=AVAILABLE&attrKey=bedrooms&attrValue=3" \
   -H "X-Tenant-ID: acme-corp"
 ```
 
@@ -500,6 +509,92 @@ curl -X GET "http://localhost:8080/api/v1/properties?category=Residential&minPri
 - Can change category (must provide valid attributes for new category)
 - Attributes validated against category schema
 - Tenant isolation enforced
+
+### Property Images ✨ NEW
+
+#### 1. Upload Property Image
+**Endpoint**: `POST /api/v1/properties/{id}/images`
+**Auth**: Admin Only
+**Content-Type**: `multipart/form-data`
+
+**Parameters**:
+- `file`: The image file to upload (e.g., `.jpg`, `.png`).
+
+**Example Request**:
+```bash
+curl -X POST "http://localhost:8080/api/v1/properties/1/images" \
+     -H "Authorization: Bearer $TOKEN" \
+     -H "X-Tenant-ID: realestate-co" \
+     -F "file=@/path/to/your/image.jpg"
+```
+
+**Response** (200 OK):
+Returns the updated `PropertyDTO` with the new image URL added to `imageUrls`.
+
+**Notes**:
+- Images are stored locally in the `uploads/{tenantId}/` directory.
+- URLs are served via `/uploads/**` path.
+- Multiple images can be uploaded one by one.
+
+---
+
+### Property Favorites ✨ NEW
+
+#### 1. Toggle Favorite
+**Endpoint**: `POST /api/v1/favorites/{propertyId}`
+**Auth**: Registered User
+**X-Tenant-ID**: Required
+
+**Description**: Adds the property to the user's favorites if it's not there, or removes it if it is.
+
+**Response** (200 OK):
+```json
+{
+  "message": "Property added to favorites"
+}
+```
+
+#### 2. List Saved Properties
+**Endpoint**: `GET /api/v1/favorites`
+**Auth**: Registered User
+**X-Tenant-ID**: Required
+
+**Response** (200 OK):
+Returns a paginated list of `PropertyDTO`s favorited by the current user.
+
+---
+
+### Property Messaging & Inquiries ✨ NEW
+
+#### 1. Send Inquiry
+**Endpoint**: `POST /api/v1/messages/inquiry`
+**Auth**: Registered User / Admin
+**X-Tenant-ID**: Required
+
+**Request**:
+```json
+{
+  "propertyId": 1,
+  "content": "I am interested in this property"
+}
+```
+
+#### 2. Get Conversation Thread
+**Endpoint**: `GET /api/v1/messages/thread/{propertyId}`
+**Auth**: Registered User / Admin
+**X-Tenant-ID**: Required
+
+**Query Parameters**:
+- `userId` (Optional): Admin can use this to view a specific user's thread. Users can only see their own.
+
+#### 3. List My Inquiries
+**Endpoint**: `GET /api/v1/messages/my-inquiries`
+**Auth**: Registered User
+**X-Tenant-ID**: Required
+
+**Description**: Returns a list of properties the user has inquired about.
+
+---
 
 ### Delete Property
 

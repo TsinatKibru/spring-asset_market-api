@@ -5,6 +5,7 @@ import com.assetmarket.api.entity.Property;
 import com.assetmarket.api.repository.PropertyRepository;
 import com.assetmarket.api.repository.CategoryRepository;
 import com.assetmarket.api.entity.Category;
+import com.assetmarket.api.entity.PropertyStatus;
 import com.assetmarket.api.security.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -38,6 +39,9 @@ public class PropertyService {
             java.math.BigDecimal maxPrice,
             String location,
             String categoryName,
+            PropertyStatus status,
+            String attrKey,
+            String attrValue,
             Pageable pageable) {
 
         Long categoryId = null;
@@ -47,8 +51,33 @@ public class PropertyService {
             categoryId = category.getId();
         }
 
+        String statusStr = status != null ? status.name() : null;
+        String tenantId = TenantContext.getCurrentTenant();
+
+        // Translate sort properties for native query
+        org.springframework.data.domain.Sort translatedSort = org.springframework.data.domain.Sort.by(
+                pageable.getSort().stream()
+                        .map(order -> {
+                            String property = order.getProperty();
+                            if (property.equals("createdAt")) {
+                                return new org.springframework.data.domain.Sort.Order(order.getDirection(),
+                                        "created_at");
+                            }
+                            if (property.equals("updatedAt")) {
+                                return new org.springframework.data.domain.Sort.Order(order.getDirection(),
+                                        "updated_at");
+                            }
+                            return order;
+                        })
+                        .toList());
+
+        Pageable nativePageable = org.springframework.data.domain.PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                translatedSort);
+
         Page<Property> properties = propertyRepository.findWithFilters(
-                minPrice, maxPrice, location, categoryId, pageable);
+                minPrice, maxPrice, location, categoryId, statusStr, attrKey, attrValue, tenantId, nativePageable);
 
         return properties.map(this::convertToDTO);
     }
@@ -59,6 +88,19 @@ public class PropertyService {
                 .orElseThrow(
                         () -> new IllegalArgumentException("Category not found: " + propertyDTO.getCategoryName()));
 
+        Property property = Property.builder()
+                .title(propertyDTO.getTitle())
+                .description(propertyDTO.getDescription())
+                .price(propertyDTO.getPrice())
+                .location(propertyDTO.getLocation())
+                .category(category)
+                .status(propertyDTO.getStatus() != null ? propertyDTO.getStatus() : PropertyStatus.AVAILABLE)
+                .attributes(propertyDTO.getAttributes())
+                .imageUrls(
+                        propertyDTO.getImageUrls() != null ? propertyDTO.getImageUrls() : new java.util.ArrayList<>())
+                .tenantId(TenantContext.getCurrentTenant())
+                .build();
+
         // Validation logic
         if (category.getAttributeSchema() == null || category.getAttributeSchema().isEmpty()) {
             throw new IllegalArgumentException("Category '" + category.getName()
@@ -66,16 +108,6 @@ public class PropertyService {
         }
 
         validateAttributes(propertyDTO.getAttributes(), category.getAttributeSchema());
-
-        Property property = Property.builder()
-                .title(propertyDTO.getTitle())
-                .description(propertyDTO.getDescription())
-                .price(propertyDTO.getPrice())
-                .location(propertyDTO.getLocation())
-                .category(category)
-                .attributes(propertyDTO.getAttributes())
-                .tenantId(TenantContext.getCurrentTenant())
-                .build();
 
         Property savedProperty = propertyRepository.save(property);
         return convertToDTO(savedProperty);
@@ -133,18 +165,33 @@ public class PropertyService {
         }
     }
 
-    private PropertyDTO convertToDTO(Property property) {
+    public PropertyDTO convertToDTO(Property property) {
         PropertyDTO dto = new PropertyDTO();
         dto.setId(property.getId());
         dto.setTitle(property.getTitle());
         dto.setDescription(property.getDescription());
         dto.setPrice(property.getPrice());
         dto.setLocation(property.getLocation());
+        dto.setStatus(property.getStatus());
+        dto.setImageUrls(property.getImageUrls() != null ? new java.util.ArrayList<>(property.getImageUrls())
+                : new java.util.ArrayList<>());
         dto.setAttributes(property.getAttributes());
         if (property.getCategory() != null) {
             dto.setCategoryName(property.getCategory().getName());
         }
         return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public PropertyDTO getPropertyById(Long id) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Property not found"));
+
+        if (!property.getTenantId().equals(TenantContext.getCurrentTenant())) {
+            throw new IllegalArgumentException("Property not found in this tenant");
+        }
+
+        return convertToDTO(property);
     }
 
     public void deleteProperty(Long id) {
@@ -174,6 +221,13 @@ public class PropertyService {
         property.setDescription(propertyDTO.getDescription());
         property.setPrice(propertyDTO.getPrice());
         property.setLocation(propertyDTO.getLocation());
+        if (propertyDTO.getStatus() != null) {
+            property.setStatus(propertyDTO.getStatus());
+        }
+
+        if (propertyDTO.getImageUrls() != null) {
+            property.setImageUrls(new java.util.ArrayList<>(propertyDTO.getImageUrls()));
+        }
 
         // Handle Category Change (if provided and different)
         Category category = property.getCategory();

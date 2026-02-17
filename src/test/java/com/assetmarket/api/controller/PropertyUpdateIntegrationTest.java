@@ -1,8 +1,6 @@
 package com.assetmarket.api.controller;
 
-import com.assetmarket.api.dto.CategoryDTO;
 import com.assetmarket.api.dto.PropertyDTO;
-import com.assetmarket.api.dto.AttributeSchemaDTO;
 import com.assetmarket.api.entity.Category;
 import com.assetmarket.api.entity.Property;
 import com.assetmarket.api.entity.User;
