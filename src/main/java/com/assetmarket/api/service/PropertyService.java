@@ -137,4 +137,42 @@ public class PropertyService {
 
         propertyRepository.delete(property);
     }
+
+    @Transactional
+    public PropertyDTO updateProperty(Long id, PropertyDTO propertyDTO) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Property not found"));
+
+        // Tenant check
+        if (!property.getTenantId().equals(TenantContext.getCurrentTenant())) {
+            throw new IllegalArgumentException("Property not found in this tenant");
+        }
+
+        // Update basic fields
+        property.setTitle(propertyDTO.getTitle());
+        property.setDescription(propertyDTO.getDescription());
+        property.setPrice(propertyDTO.getPrice());
+        property.setLocation(propertyDTO.getLocation());
+
+        // Handle Category Change (if provided and different)
+        Category category = property.getCategory();
+        if (propertyDTO.getCategoryName() != null && !propertyDTO.getCategoryName().equals(category.getName())) {
+            category = categoryRepository.findByName(propertyDTO.getCategoryName())
+                    .orElseThrow(
+                            () -> new IllegalArgumentException("Category not found: " + propertyDTO.getCategoryName()));
+            property.setCategory(category);
+        }
+
+        // Validation logic for attributes
+        if (category.getAttributeSchema() == null || category.getAttributeSchema().isEmpty()) {
+            throw new IllegalArgumentException("Category '" + category.getName()
+                    + "' has no validation schema defined. Please update the category first.");
+        }
+
+        validateAttributes(propertyDTO.getAttributes(), category.getAttributeSchema());
+        property.setAttributes(propertyDTO.getAttributes());
+
+        Property savedProperty = propertyRepository.save(property);
+        return convertToDTO(savedProperty);
+    }
 }

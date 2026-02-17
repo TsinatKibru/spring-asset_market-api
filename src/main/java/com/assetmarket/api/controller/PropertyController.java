@@ -41,4 +41,11 @@ public class PropertyController {
         propertyService.deleteProperty(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PropertyDTO> updateProperty(@PathVariable Long id,
+            @Valid @RequestBody PropertyDTO propertyDTO) {
+        return ResponseEntity.ok(propertyService.updateProperty(id, propertyDTO));
+    }
 }
