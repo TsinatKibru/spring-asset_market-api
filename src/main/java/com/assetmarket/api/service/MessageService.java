@@ -25,6 +25,7 @@ public class MessageService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final PropertyService propertyService;
+    private final TelegramService telegramService;
 
     @Transactional
     public MessageDTO sendInquiry(Long propertyId, String content) {
@@ -43,7 +44,15 @@ public class MessageService {
                 .tenantId(TenantContext.getCurrentTenant())
                 .build();
 
-        return convertToDTO(messageRepository.save(message));
+        Message savedMessage = messageRepository.save(message);
+
+        // Notify Sender for confirmation
+        if (sender.getTelegramId() != null) {
+            telegramService.sendBotMessage(sender.getTelegramId(),
+                    "📩 *Inquiry Sent*\nYour message regarding `" + property.getTitle() + "` has been delivered.");
+        }
+
+        return convertToDTO(savedMessage);
     }
 
     @Transactional(readOnly = true)

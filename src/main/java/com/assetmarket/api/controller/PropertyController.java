@@ -60,6 +60,12 @@ public class PropertyController {
         return ResponseEntity.ok(properties);
     }
 
+    @GetMapping("/{id}")
+    @io.swagger.v3.oas.annotations.Operation(summary = "Get property by ID", description = "Fetch complete details of a single property listing")
+    public ResponseEntity<PropertyDTO> getPropertyById(@PathVariable Long id) {
+        return ResponseEntity.ok(propertyService.getPropertyById(id));
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(summary = "Create a new property", description = "Admins can create new properties with dynamic attributes")

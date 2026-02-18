@@ -47,4 +47,7 @@ public class User extends TenantAware {
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
     private Set<Role> roles = new HashSet<>();
+
+    @Column(unique = true)
+    private String telegramId;
 }

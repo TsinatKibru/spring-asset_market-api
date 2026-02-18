@@ -33,6 +33,19 @@ public class CategoryController {
         return ResponseEntity.ok(categories);
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Get category by ID", description = "Fetch details of a single category")
+    public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Category not found"));
+
+        if (!category.getTenantId().equals(TenantContext.getCurrentTenant())) {
+            throw new IllegalArgumentException("Category not found in this tenant");
+        }
+
+        return ResponseEntity.ok(convertToDTO(category));
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Create a new category", description = "Allows administrators to create new property categories")

@@ -3,6 +3,7 @@ package com.assetmarket.api.controller;
 import com.assetmarket.api.dto.JwtResponse;
 import com.assetmarket.api.dto.LoginRequest;
 import com.assetmarket.api.dto.SignupRequest;
+import com.assetmarket.api.dto.UserResponseDTO;
 import com.assetmarket.api.entity.Role;
 import com.assetmarket.api.entity.User;
 import com.assetmarket.api.repository.UserRepository;
@@ -75,6 +76,24 @@ public class AuthController {
         } finally {
             com.assetmarket.api.security.TenantContext.clear();
         }
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponseDTO> getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String currentTenant = com.assetmarket.api.security.TenantContext.getCurrentTenant();
+
+        User user = userRepository.findByUsernameAndTenantId(username, currentTenant)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(UserResponseDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .tenantId(user.getTenantId())
+                .roles(user.getRoles().stream().map(Role::name).collect(Collectors.toSet()))
+                .build());
     }
 
     @PostMapping("/register")

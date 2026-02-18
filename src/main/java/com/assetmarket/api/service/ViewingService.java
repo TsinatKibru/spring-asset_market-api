@@ -26,6 +26,7 @@ public class ViewingService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final MessageRepository messageRepository;
+    private final TelegramService telegramService;
 
     @Transactional
     public ViewingRequestDTO requestViewing(Long propertyId, LocalDateTime dateTime, String notes) {
@@ -60,6 +61,15 @@ public class ViewingService {
                 .tenantId(TenantContext.getCurrentTenant())
                 .build());
 
+        // Notify via Telegram if user has it linked
+        if (user.getTelegramId() != null) {
+            String appUrl = "https://optimally-unmunitioned-raeann.ngrok-free.dev";
+            telegramService.sendBotMessageWithButton(user.getTelegramId(),
+                    "🏠 *Viewing Requested!*\nYour request for `" + property.getTitle() + "` has been received.",
+                    "Open Marketplace",
+                    appUrl);
+        }
+
         return convertToDTO(request);
     }
 
@@ -93,6 +103,20 @@ public class ViewingService {
                 .content(messageContent)
                 .tenantId(TenantContext.getCurrentTenant())
                 .build());
+
+        // Notify Recipient if they have Telegram linked
+        User targetUser = request.getUser();
+        if (targetUser.getTelegramId() != null) {
+            String emoji = status == ViewingStatus.APPROVED ? "✅" : "❌";
+            String appUrl = "https://optimally-unmunitioned-raeann.ngrok-free.dev/property/"
+                    + request.getProperty().getId();
+
+            telegramService.sendBotMessageWithButton(targetUser.getTelegramId(),
+                    emoji + " *Status Updated*\nYour viewing for `" + request.getProperty().getTitle() + "` is now *"
+                            + status + "*.",
+                    "View Property",
+                    appUrl);
+        }
 
         return convertToDTO(request);
     }
