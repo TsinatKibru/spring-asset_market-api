@@ -140,6 +140,10 @@ public class PropertyService {
                 .orElseThrow(
                         () -> new IllegalArgumentException("Category not found: " + propertyDTO.getCategoryName()));
 
+        // Sanitize and validate attributes
+        java.util.Map<String, Object> sanitizedAttributes = validateAttributes(propertyDTO.getAttributes(),
+                category.getAttributeSchema());
+
         Property property = Property.builder()
                 .title(propertyDTO.getTitle())
                 .description(propertyDTO.getDescription())
@@ -147,37 +151,31 @@ public class PropertyService {
                 .location(propertyDTO.getLocation())
                 .category(category)
                 .status(propertyDTO.getStatus() != null ? propertyDTO.getStatus() : PropertyStatus.AVAILABLE)
-                .attributes(propertyDTO.getAttributes())
+                .attributes(sanitizedAttributes)
                 .imageUrls(
                         propertyDTO.getImageUrls() != null ? propertyDTO.getImageUrls() : new java.util.ArrayList<>())
                 .tenantId(TenantContext.getCurrentTenant())
                 .build();
 
-        // Validation logic
-        if (category.getAttributeSchema() == null || category.getAttributeSchema().isEmpty()) {
-            throw new IllegalArgumentException("Category '" + category.getName()
-                    + "' has no validation schema defined. Please update the category first.");
-        }
-
-        validateAttributes(propertyDTO.getAttributes(), category.getAttributeSchema());
-
         Property savedProperty = propertyRepository.save(property);
         return convertToDTO(savedProperty);
     }
 
-    private void validateAttributes(java.util.Map<String, Object> attributes,
+    private java.util.Map<String, Object> validateAttributes(java.util.Map<String, Object> attributes,
             java.util.List<java.util.Map<String, Object>> schema) {
-        if (schema == null || schema.isEmpty())
-            return;
-        if (attributes == null)
-            attributes = new java.util.HashMap<>();
+        if (schema == null || schema.isEmpty()) {
+            return new java.util.HashMap<>();
+        }
+
+        java.util.Map<String, Object> inputAttributes = attributes != null ? attributes : new java.util.HashMap<>();
+        java.util.Map<String, Object> sanitizedAttributes = new java.util.HashMap<>();
 
         for (java.util.Map<String, Object> fieldSchema : schema) {
             String name = (String) fieldSchema.get("name");
             String type = (String) fieldSchema.get("type");
             boolean required = fieldSchema.get("required") != null && (boolean) fieldSchema.get("required");
 
-            Object value = attributes.get(name);
+            Object value = inputAttributes.get(name);
 
             if (required && value == null) {
                 throw new IllegalArgumentException("Metadata field '" + name + "' is required for this category.");
@@ -185,16 +183,11 @@ public class PropertyService {
 
             if (value != null) {
                 validateType(name, value, type);
+                sanitizedAttributes.put(name, value);
             }
         }
 
-        // Strict Check: No unknown fields
-        for (String key : attributes.keySet()) {
-            boolean known = schema.stream().anyMatch(f -> f.get("name").equals(key));
-            if (!known) {
-                throw new IllegalArgumentException("Metadata field '" + key + "' is not recognized for this category.");
-            }
-        }
+        return sanitizedAttributes;
     }
 
     private void validateType(String name, Object value, String expectedType) {
@@ -294,14 +287,10 @@ public class PropertyService {
             property.setCategory(category);
         }
 
-        // Validation logic for attributes
-        if (category.getAttributeSchema() == null || category.getAttributeSchema().isEmpty()) {
-            throw new IllegalArgumentException("Category '" + category.getName()
-                    + "' has no validation schema defined. Please update the category first.");
-        }
-
-        validateAttributes(propertyDTO.getAttributes(), category.getAttributeSchema());
-        property.setAttributes(propertyDTO.getAttributes());
+        // Sanitize and validate attributes
+        java.util.Map<String, Object> sanitizedAttributes = validateAttributes(propertyDTO.getAttributes(),
+                category.getAttributeSchema());
+        property.setAttributes(sanitizedAttributes);
 
         Property savedProperty = propertyRepository.save(property);
         return convertToDTO(savedProperty);

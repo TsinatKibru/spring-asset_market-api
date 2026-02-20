@@ -20,3 +20,7 @@ logging:
   level:
     com.assetmarket.api: DEBUG
     org.hibernate.SQL: DEBUG
+
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:test-bot-token}

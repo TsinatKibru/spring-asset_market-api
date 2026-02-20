@@ -92,16 +92,18 @@ export default function EditPropertyPage() {
         e.preventDefault();
         if (submitting) return;
 
-        // Prepare attributes based on schema
-        const processedAttributes = { ...formData.attributes };
+        // Prepare and sanitize attributes based on schema
+        const processedAttributes: Record<string, any> = {};
         if (selectedCategory?.attributeSchema) {
             selectedCategory.attributeSchema.forEach((attr: any) => {
-                const val = processedAttributes[attr.name];
-                if (val !== undefined && val !== "") {
+                const val = formData.attributes[attr.name];
+                if (val !== undefined && val !== "" && val !== null) {
                     if (attr.type === 'number') {
                         processedAttributes[attr.name] = parseFloat(val);
                     } else if (attr.type === 'boolean') {
                         processedAttributes[attr.name] = val === true || val === "true" || val === "1" || val === "yes";
+                    } else {
+                        processedAttributes[attr.name] = val;
                     }
                 }
             });
