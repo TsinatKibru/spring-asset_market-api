@@ -278,9 +278,9 @@ export default function Home() {
 
       {/* Filter Sheet */}
       {showFilters && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowFilters(false)} />
-          <div className="relative z-10 max-h-[90vh] overflow-y-auto rounded-t-3xl bg-white px-6 pt-4 pb-10 shadow-2xl dark:bg-zinc-900">
+          <div className="relative z-10 max-h-[90vh] overflow-y-auto rounded-t-3xl bg-white px-6 pt-4 pb-32 shadow-2xl dark:bg-zinc-900">
             <div className="mx-auto mb-6 h-1 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700" />
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-zinc-900 dark:text-white">Filters & Sort</h2>

@@ -5,7 +5,14 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "./providers/AuthProvider";
 import { Home, Heart, MessageSquare, User, LayoutDashboard, ShieldCheck } from "lucide-react";
 
-const navItems = [
+interface NavItem {
+    name: string;
+    href: string;
+    icon: any;
+    badge?: boolean;
+}
+
+const navItems: NavItem[] = [
     { name: "Home", href: "/", icon: Home },
     { name: "Saved", href: "/saved", icon: Heart },
     { name: "Messages", href: "/messages", icon: MessageSquare },
@@ -32,6 +39,16 @@ export default function Navigation() {
             badge: true
         });
     }
+
+    // Hide navigation on specific routes (e.g., detail pages, edit pages, add pages)
+    const hideNavRoutes = [
+        "/property/",
+        "/merchant/property/",
+    ];
+
+    const shouldHide = hideNavRoutes.some(route => pathname.includes(route));
+
+    if (shouldHide) return null;
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-white/90 backdrop-blur-xl dark:border-zinc-800 dark:bg-black/90 pb-safe">
