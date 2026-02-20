@@ -16,6 +16,7 @@ A production-grade REST API for a property marketplace, featuring robust multi-t
 - **Advanced Search**: High-performance filtering by price, location, status, and dynamic attributes
 - **Favorites System**: User-specific saved properties with tenant isolation
 - **Messaging & Inquiries**: Secure property-linked communication between buyers and merchants
+- **Telegram Mini App (TMA)**: Full-featured mobile experience with merchant dashboard and bot notifications ✨ **NEW**
 
 ### Security & Multi-tenancy
 - **Stateless JWT Security**: Secure authentication and role-based authorization (USER, ADMIN)
@@ -26,6 +27,7 @@ A production-grade REST API for a property marketplace, featuring robust multi-t
 ### Architecture & Quality
 - **Clean Architecture**: Strictly layered separation (Controller → Service → Repository)
 - **Comprehensive Testing**: 20+ integration tests covering all critical paths
+- **Service Management**: Unified scripts (`manage.sh`, `db.sh`) for devops and DB ops ✨ **NEW**
 - **API Documentation**: Interactive Swagger/OpenAPI documentation
 - **Production Ready**: Pagination, versioning, DTO validation, and error handling
 
@@ -52,9 +54,10 @@ A production-grade REST API for a property marketplace, featuring robust multi-t
 - `DELETE /api/v1/categories/{id}` - Delete category (admin only)
 
 ### Properties
-- `PUT /api/v1/properties/{id}` - Update property (admin only)
-- `POST /api/v1/properties/{id}/images` - Upload images (admin only) ✨ **NEW**
-- `DELETE /api/v1/properties/{id}` - Delete property (admin only)
+- **PUT /api/v1/properties/{id}** - Update property (Merchant/Admin)
+- **POST /api/v1/properties/upload** - Standalone image upload (Merchant/Admin) ✨ **NEW**
+- **POST /api/v1/properties/{id}/images** - Associate images with property (Merchant/Admin)
+- **DELETE /api/v1/properties/{id}** - Delete property (Admin only)
 
 ### Favorites & Messaging ✨ **NEW**
 - `POST /api/v1/favorites/{id}` - Toggle favorite status

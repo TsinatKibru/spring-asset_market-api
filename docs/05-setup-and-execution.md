@@ -1,55 +1,57 @@
 # Documentation: Setup and Execution
 
-This guide provides step-by-step instructions to get the Secure Multi-tenant Property Marketplace API up and running.
+This guide provides instructions to get the Asset Market and its Telegram Mini App up and running using the unified management tools.
 
 ## 1. Prerequisites
 - **Docker & Docker Compose**: For running the PostgreSQL database.
-- **JDK 17**: The project requires Java 17 (verified compatibility).
-- **Maven 3.6+**: For project build and dependency management.
+- **JDK 17 & Maven**: For the Spring Boot backend.
+- **Node.js & npm**: For the Next.js TMA frontend.
+- **ngrok**: To tunnel local traffic for Telegram bot testing.
 
-## 2. Database Setup (Docker)
-The project includes a `docker-compose.yml` file to spin up a PostgreSQL instance.
-
-```bash
-# Start the PostgreSQL container
-docker-compose up -d
-
-# Verify it is running
-docker ps | grep asset-market-db
-```
-
-## 3. Building the Application
-To ensure compatibility with Spring Boot 3.2.2, use Java 17 for the build.
+## 2. Unified Management (Recommended)
+The project includes a unified script `manage.sh` to handle all services (DB, Backend, Frontend, and Ngrok).
 
 ```bash
-# Set JAVA_HOME to Java 17
-export JAVA_HOME=/usr/lib/jvm/java-1.17.0-openjdk-amd64
+# Start all services
+./manage.sh start
 
-# Clean and install dependencies
-mvn clean install -DskipTests
+# Check status of all processes
+./manage.sh status
+
+# Stop all services
+./manage.sh stop
+
+# Tail logs for all services
+./manage.sh logs
 ```
 
-## 4. Running Automated Tests
-The project includes integration tests that verify multi-tenancy isolation and JWT flows.
+## 3. Database Operations
+Use the `db.sh` script for direct interaction with the PostgreSQL instance.
 
 ```bash
-# Run tests
-mvn test
+# Describe table schemas
+./db.sh describe categories
+./db.sh describe properties
+
+# Seed the database with premium sample data
+./db.sh seed
+
+# Run raw SQL queries
+./db.sh query "SELECT count(*) FROM properties;"
 ```
 
-## 5. Running the Application
-Once the build is successful and the database is running:
+## 4. Manual Execution
+If you prefer to run services individually:
 
-```bash
-# Start the Spring Boot application
-mvn spring-boot:run
-```
+1. **Database**: `docker-compose up -d`
+2. **Backend**: `mvn spring-boot:run`
+3. **Frontend**: `cd tma-frontend && npm run dev`
+4. **Ngrok**: `ngrok http 8080`
 
-## 6. Accessing the API
-- **Base URL**: `http://localhost:8080/api/v1`
-- **Swagger Documentation**: `http://localhost:8080/swagger-ui.html`
-- **Health Check**: `http://localhost:8080/actuator/health` (if actuator is enabled)
+## 5. First Steps
+1. **Reset Data**: `./manage.sh stop && ./manage.sh start`
+2. **Seed Market**: `./db.sh seed`
+3. **Launch TMA**: Open the bot link in Telegram (after updating the webhook if ngrok URL changed).
 
-## 7. Configuration Notes
-- **JWT Secret**: Configurable via `assetmarket.app.jwtSecret` in `application.yml`.
-- **Database Credentials**: Managed via environment variables or direct edits in `application.yml`.
+---
+**Note**: Always ensure your `application.yml` has the correct `botToken` and `uploadDir` configured.

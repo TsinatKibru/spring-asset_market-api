@@ -5,57 +5,58 @@ This guide documents the technical setup for bridging the **Asset Market Spring 
 ## 1. Concepts & Architecture
 
 ### Telegram Mini App (TMA)
-A TMA is a web application (built with Next.js in our case) that runs inside the Telegram interface. It feels like a native mobile app but is actually an embedded web view.
+A TMA is a web application (built with Next.js) that runs inside the Telegram interface. It provides a native-like experience while leveraging standard web technologies.
 
-### Webhooks
-A **Webhook** is an HTTP callback. Instead of our server constantly asking Telegram for updates (Polling), we tell Telegram where our server is. When a user interacts with the bot, Telegram "pushes" a JSON payload to our `/api/v1/telegram/webhook` endpoint instantly.
-
-### ngrok (The Bridge)
-Since Telegram cannot see your `localhost:8080`, we use **ngrok** to create a secure tunnel. It provides a public HTTPS URL (e.g., `https://optimally-unmunitioned-raeann.ngrok-free.dev`) that forwards all traffic to your local machine.
+### Webhooks & Tunnels
+- **Webhook**: Telegram "pushes" updates to our `/api/v1/telegram/webhook` endpoint.
+- **ngrok**: Provides a public HTTPS URL that tunnels traffic to `localhost:8080`, allowing Telegram to reach our local development environment.
 
 ---
 
-## 2. Steps Taken So Far
+## 2. Infrastructure & Auth
 
-### Step 1: Bot Creation
-We used `@BotFather` on Telegram to create `@asset_market_bot`. 
-- **Bot Name**: Asset Marketplace
-- **API Token**: `REDACTED_BOT_TOKEN` (Stored in `application.yml`)
+### Bot Setup
+- **Bot**: `@asset_market_bot` (Managed via `@BotFather`).
+- **Token Security**: The bot token is stored in `application.yml` and used for HMAC-SHA256 signature validation.
 
-### Step 2: Backend Infrastructure
-We implemented several core components in Spring Boot:
-- **`TelegramService.java`**: Handles HMAC-SHA256 validation of `initData` sent from the frontend to ensure requests are genuinely from Telegram.
-- **`TelegramBotController.java`**: Exposes the Webhook listener and an Auth endpoint.
-- **Security Updates**: Whitelisted `/api/v1/telegram/**` in `WebSecurityConfig.java` so Telegram can "talk" to us without being blocked.
-- **User Mapping**: Added `telegramId` to the `User` entity to link Telegram accounts to our system.
+### Authentication Flow
+1. **Frontend**: Extracts `initData` from the Telegram WebApp SDK.
+2. **Verification**: Backend validates the `initData` hash against the Bot Token.
+3. **Provisioning**: 
+   - New Telegram users are automatically registered with a `tg_` prefix.
+   - Users are assigned `ROLE_USER` (Client) and can be upgraded to `ROLE_ADMIN` (Merchant).
+4. **Session**: A JWT token is issued for all subsequent API requests.
 
-### Step 3: Webhook Registration
-We linked the bot to our ngrok URL using the Telegram API:
+---
+
+## 3. Marketplace Features in TMA
+
+### Merchant Dashboard
+Accessible to users with sufficient privileges, allowing them to:
+- **Add Property**: Step-by-step listing creation with dynamic category schemas.
+- **Image Management**: High-performance multi-image upload with local preview and removal.
+- **Listing Management**: Update prices, descriptions, and dynamic specs on the fly.
+
+### Discovery & Interaction
+- **Advanced Search**: Real-time filtering by price, location, and property type.
+- **Premium Carousel**: Native-feel swipeable image gallery on property detail pages.
+- **Tactile Feedback**: Integrated Telegram Haptic Engine for actions like "Save to Favorites" or "Upload Image".
+
+---
+
+## 4. Maintenance & Operations
+
+### Unified Management
+Use the following root scripts for streamlined operations:
+- `./manage.sh start/stop`: Manages Backend, Frontend, DB, and Ngrok.
+- `./db.sh describe/seed`: Database schema inspection and automated data population.
+
+### Webhook Rotation
+If ngrok restarts, update the webhook URL manually or via `./manage.sh`:
 ```bash
-curl -s "https://api.telegram.org/bot<TOKEN>/setWebhook?url=<NGROK_URL>/api/v1/telegram/webhook"
+curl -s "https://api.telegram.org/bot<TOKEN>/setWebhook?url=<NEW_URL>/api/v1/telegram/webhook"
 ```
-Telegram confirmed: `{"ok":true,"result":true,"description":"Webhook was set"}`.
 
 ---
 
-## 3. How Authentication Works
-
-1. **Initialization**: The Next.js frontend gets `initData` from the Telegram SDK.
-2. **Validation**: The frontend sends this data to our `/api/v1/telegram/auth` endpoint.
-3. **Verification**: `TelegramService` uses the **Bot Token** to verify the hash of the data.
-4. **Login/Signup**: 
-   - If the `telegramId` exists, we log the user in.
-   - If not, we automatically create a new user profile prefixed with `tg_`.
-5. **Session**: The backend returns a standard **JWT Token**, which the frontend uses for all future marketplace requests.
-
----
-
-## 4. Maintenance (If you restart)
-
-If you stop `ngrok` and restart it, the URL will change. You must:
-1. Copy the new ngrok URL.
-2. Re-run the `setWebhook` command to update Telegram.
-
----
-
-**Next Phase**: Creating the Next.js Frontend inside the `tma-frontend` directory.
+**Current Status**: TMA is fully operational with merchant workflows and multi-tenant image support.

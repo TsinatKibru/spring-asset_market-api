@@ -510,35 +510,46 @@ curl -X GET "http://localhost:8080/api/v1/properties?status=AVAILABLE&attrKey=be
 - Attributes validated against category schema
 - Tenant isolation enforced
 
-### Property Images ✨ NEW
+### Property Images
 
-#### 1. Upload Property Image
-**Endpoint**: `POST /api/v1/properties/{id}/images`
-**Auth**: Admin Only
+#### 1. Standalone Image Upload
+**Endpoint**: `POST /api/v1/properties/upload`  
+**Auth**: Registered User (Merchant) / Admin  
 **Content-Type**: `multipart/form-data`
 
 **Parameters**:
-- `file`: The image file to upload (e.g., `.jpg`, `.png`).
+- `file`: The image file to upload.
 
-**Example Request**:
-```bash
-curl -X POST "http://localhost:8080/api/v1/properties/1/images" \
-     -H "Authorization: Bearer $TOKEN" \
-     -H "X-Tenant-ID: realestate-co" \
-     -F "file=@/path/to/your/image.jpg"
+**Example Response** (200 OK):
+```json
+{
+  "url": "/uploads/acme-corp/729f632b-6d9c-43e4-a350-0d1aa25a98e6.jpg"
+}
 ```
 
+**Notes**:
+- Use this to pre-upload images before creating or updating a property listing.
+- URLs are relative and should be stored in the `imageUrls` array of a property.
+
+#### 2. Associate Image with Property
+**Endpoint**: `POST /api/v1/properties/{id}/images`  
+**Auth**: Registered User (Merchant) / Admin  
+**Content-Type**: `multipart/form-data`
+
+**Parameters**:
+- `file`: The image file to upload.
+
 **Response** (200 OK):
-Returns the updated `PropertyDTO` with the new image URL added to `imageUrls`.
+Returns the updated `PropertyDTO` with the new image URL added.
 
 **Notes**:
-- Images are stored locally in the `uploads/{tenantId}/` directory.
-- URLs are served via `/uploads/**` path.
-- Multiple images can be uploaded one by one.
+- Directly adds an image to an existing property's gallery.
+- Multi-tenancy isolation ensures images are stored in `uploads/{tenantId}/`.
+- Served via `/uploads/**` path with public read access.
 
 ---
 
-### Property Favorites ✨ NEW
+### Property Favorites
 
 #### 1. Toggle Favorite
 **Endpoint**: `POST /api/v1/favorites/{propertyId}`
@@ -564,7 +575,7 @@ Returns a paginated list of `PropertyDTO`s favorited by the current user.
 
 ---
 
-### Property Messaging & Inquiries ✨ NEW
+### Property Messaging & Inquiries
 
 #### 1. Send Inquiry
 **Endpoint**: `POST /api/v1/messages/inquiry`
@@ -596,7 +607,7 @@ Returns a paginated list of `PropertyDTO`s favorited by the current user.
 
 ---
 
-### Property Viewing Scheduler ✨ NEW
+### Property Viewing Scheduler
 
 #### 1. Request a Viewing
 **Endpoint**: `POST /api/v1/viewings/request`
@@ -630,7 +641,7 @@ Returns a paginated list of `PropertyDTO`s favorited by the current user.
 
 ---
 
-### Property Reviews & Ratings ✨ NEW
+### Property Reviews & Ratings
 
 #### 1. Leave a Review
 **Endpoint**: `POST /api/v1/reviews`
