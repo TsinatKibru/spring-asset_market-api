@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@lombok.extern.slf4j.Slf4j
 public class PropertyService {
 
     @Autowired
@@ -43,15 +44,19 @@ public class PropertyService {
             String location,
             String categoryName,
             PropertyStatus status,
-            String attrKey,
-            String attrValue,
+            java.util.Map<String, String> attributes,
             Pageable pageable) {
 
         Long categoryId = null;
+        Category category = null;
         if (categoryName != null && !categoryName.isEmpty()) {
-            Category category = categoryRepository.findByName(categoryName)
-                    .orElseThrow(() -> new IllegalArgumentException("Category not found: " + categoryName));
-            categoryId = category.getId();
+            category = categoryRepository.findByName(categoryName).orElse(null);
+            if (category != null) {
+                categoryId = category.getId();
+            } else {
+                log.warn("Search attempted with non-existent category: {}", categoryName);
+                // We could throw here, but let's just proceed without category filter
+            }
         }
 
         String statusStr = status != null ? status.name() : null;
@@ -79,10 +84,54 @@ public class PropertyService {
                 pageable.getPageSize(),
                 translatedSort);
 
-        Page<Property> properties = propertyRepository.findWithFilters(
-                minPrice, maxPrice, location, categoryId, statusStr, attrKey, attrValue, tenantId, nativePageable);
+        String attributesJson = null;
+        if (attributes != null && !attributes.isEmpty()) {
+            try {
+                java.util.Map<String, Object> typedAttributes = new java.util.HashMap<>();
+                if (category != null && category.getAttributeSchema() != null) {
+                    for (java.util.Map.Entry<String, String> entry : attributes.entrySet()) {
+                        String key = entry.getKey();
+                        String val = entry.getValue();
 
-        return properties.map(this::convertToDTO);
+                        // Find attribute definition in schema
+                        java.util.Optional<java.util.Map<String, Object>> attrSchema = category.getAttributeSchema()
+                                .stream()
+                                .filter(s -> key.equals(s.get("name")))
+                                .findFirst();
+
+                        if (attrSchema.isPresent()) {
+                            String type = (String) attrSchema.get().get("type");
+                            if ("number".equals(type)) {
+                                try {
+                                    if (val.contains(".")) {
+                                        typedAttributes.put(key, Double.parseDouble(val));
+                                    } else {
+                                        typedAttributes.put(key, Long.parseLong(val));
+                                    }
+                                } catch (NumberFormatException e) {
+                                    typedAttributes.put(key, val);
+                                }
+                            } else if ("boolean".equals(type)) {
+                                typedAttributes.put(key, Boolean.parseBoolean(val));
+                            } else {
+                                typedAttributes.put(key, val);
+                            }
+                        } else {
+                            typedAttributes.put(key, val);
+                        }
+                    }
+                } else {
+                    typedAttributes.putAll(attributes);
+                }
+                attributesJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(typedAttributes);
+            } catch (Exception e) {
+                log.error("Failed to serialize attributes for filtering", e);
+            }
+        }
+
+        return propertyRepository.findWithFilters(
+                minPrice, maxPrice, location, categoryId, statusStr, attributesJson, tenantId, nativePageable)
+                .map(this::convertToDTO);
     }
 
     @Transactional

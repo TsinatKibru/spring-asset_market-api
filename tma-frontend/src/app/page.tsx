@@ -12,8 +12,7 @@ interface Filters {
   minPrice: string;
   maxPrice: string;
   status: string;
-  attrKey: string;
-  attrValue: string;
+  attributes: Record<string, string>;
   sortBy: string;
   sortDir: string;
 }
@@ -23,8 +22,7 @@ const DEFAULT_FILTERS: Filters = {
   minPrice: "",
   maxPrice: "",
   status: "",
-  attrKey: "",
-  attrValue: "",
+  attributes: {},
   sortBy: "createdAt",
   sortDir: "DESC",
 };
@@ -36,7 +34,7 @@ export default function Home() {
 
   const [properties, setProperties] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,15 +61,19 @@ export default function Home() {
 
   const buildQuery = useCallback(() => {
     const params = new URLSearchParams();
-    if (selectedCategory) params.set("category", selectedCategory);
+    if (selectedCategory) params.set("category", selectedCategory.name);
     if (searchQuery.trim()) params.set("location", searchQuery.trim());
     if (filters.minPrice) params.set("minPrice", filters.minPrice);
     if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
     if (filters.status) params.set("status", filters.status);
-    if (filters.attrKey.trim() && filters.attrValue.trim()) {
-      params.set("attrKey", filters.attrKey.trim());
-      params.set("attrValue", filters.attrValue.trim());
-    }
+
+    // Dynamic attributes
+    Object.entries(filters.attributes).forEach(([key, value]) => {
+      if (value.trim()) {
+        params.set(`attr[${key}]`, value.trim());
+      }
+    });
+
     params.set("sortBy", filters.sortBy);
     params.set("sortDir", filters.sortDir);
     return params.toString();
@@ -82,7 +84,7 @@ export default function Home() {
     if (filters.minPrice) count++;
     if (filters.maxPrice) count++;
     if (filters.status) count++;
-    if (filters.attrKey && filters.attrValue) count++;
+    count += Object.keys(filters.attributes).filter(k => filters.attributes[k].trim()).length;
     if (filters.sortBy !== "createdAt" || filters.sortDir !== "DESC") count++;
     setActiveFilterCount(count);
   }, [filters]);
@@ -108,9 +110,11 @@ export default function Home() {
     loadProperties();
   }, [isAuthenticated, buildQuery]);
 
-  const handleCategorySelect = (categoryName: string | null) => {
+  const handleCategorySelect = (category: any | null) => {
     webApp?.HapticFeedback?.impactOccurred?.("light");
-    setSelectedCategory(categoryName);
+    setSelectedCategory(category);
+    // Reset attribute filters when category changes
+    setFilters(f => ({ ...f, attributes: {} }));
   };
 
   const handleResetFilters = () => {
@@ -123,6 +127,16 @@ export default function Home() {
   const handleApplyFilters = () => {
     webApp?.HapticFeedback?.impactOccurred?.("medium");
     setShowFilters(false);
+  };
+
+  const handleAttributeChange = (key: string, value: string) => {
+    setFilters(f => ({
+      ...f,
+      attributes: {
+        ...f.attributes,
+        [key]: value
+      }
+    }));
   };
 
   if (authLoading || !isReady) {
@@ -167,8 +181,8 @@ export default function Home() {
           <button
             onClick={() => { webApp?.HapticFeedback?.impactOccurred?.("light"); setShowFilters(true); }}
             className={`relative flex items-center justify-center rounded-xl px-3.5 py-3 transition-all active:scale-95 ${activeFilterCount > 0
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
-                : "bg-zinc-50 text-zinc-500 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:ring-zinc-700"
+              ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
+              : "bg-zinc-50 text-zinc-500 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:ring-zinc-700"
               }`}
           >
             <SlidersHorizontal size={17} />
@@ -185,8 +199,8 @@ export default function Home() {
           <button
             onClick={() => handleCategorySelect(null)}
             className={`flex-none flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-black transition-all active:scale-95 ${selectedCategory === null
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
-                : "bg-zinc-50 text-zinc-500 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700"
+              ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
+              : "bg-zinc-50 text-zinc-500 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700"
               }`}
           >
             <LayoutGrid size={12} />
@@ -195,10 +209,10 @@ export default function Home() {
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => handleCategorySelect(cat.name)}
-              className={`flex-none rounded-xl px-4 py-2 text-xs font-black transition-all active:scale-95 ${selectedCategory === cat.name
-                  ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
-                  : "bg-zinc-50 text-zinc-500 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700"
+              onClick={() => handleCategorySelect(cat)}
+              className={`flex-none rounded-xl px-4 py-2 text-xs font-black transition-all active:scale-95 ${selectedCategory?.id === cat.id
+                ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
+                : "bg-zinc-50 text-zinc-500 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:text-zinc-400 dark:ring-zinc-700"
                 }`}
             >
               {cat.name}
@@ -266,7 +280,7 @@ export default function Home() {
       {showFilters && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowFilters(false)} />
-          <div className="relative z-10 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white px-6 pt-4 pb-10 shadow-2xl dark:bg-zinc-900">
+          <div className="relative z-10 max-h-[90vh] overflow-y-auto rounded-t-3xl bg-white px-6 pt-4 pb-10 shadow-2xl dark:bg-zinc-900">
             <div className="mx-auto mb-6 h-1 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700" />
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-black text-zinc-900 dark:text-white">Filters & Sort</h2>
@@ -292,8 +306,8 @@ export default function Home() {
                       type="button"
                       onClick={() => setFilters(f => ({ ...f, sortBy: opt.sortBy, sortDir: opt.sortDir }))}
                       className={`rounded-xl py-2.5 text-xs font-black transition-all ${filters.sortBy === opt.sortBy && filters.sortDir === opt.sortDir
-                          ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
-                          : "bg-zinc-50 text-zinc-500 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:ring-zinc-700"
+                        ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
+                        : "bg-zinc-50 text-zinc-500 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:ring-zinc-700"
                         }`}
                     >
                       {opt.label}
@@ -312,8 +326,8 @@ export default function Home() {
                       type="button"
                       onClick={() => setFilters(f => ({ ...f, status: s }))}
                       className={`rounded-xl py-2.5 text-[10px] font-black transition-all ${filters.status === s
-                          ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
-                          : "bg-zinc-50 text-zinc-500 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:ring-zinc-700"
+                        ? "bg-zinc-900 text-white dark:bg-white dark:text-black"
+                        : "bg-zinc-50 text-zinc-500 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:ring-zinc-700"
                         }`}
                     >
                       {s || "Any"}
@@ -349,33 +363,46 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Attribute Filter */}
-              <div>
-                <label className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Custom Attribute</label>
-                <p className="text-[10px] text-zinc-400 mt-0.5">e.g. Key: "bedrooms" Value: "3"</p>
-                <div className="mt-2 flex gap-3">
-                  <div className="flex-1 rounded-2xl bg-zinc-50 px-4 py-3 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:ring-zinc-700">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Key</p>
-                    <input
-                      type="text"
-                      placeholder="bedrooms"
-                      value={filters.attrKey}
-                      onChange={e => setFilters(f => ({ ...f, attrKey: e.target.value }))}
-                      className="w-full bg-transparent text-sm font-black outline-none dark:text-white"
-                    />
-                  </div>
-                  <div className="flex-1 rounded-2xl bg-zinc-50 px-4 py-3 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:ring-zinc-700">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">Value</p>
-                    <input
-                      type="text"
-                      placeholder="3"
-                      value={filters.attrValue}
-                      onChange={e => setFilters(f => ({ ...f, attrValue: e.target.value }))}
-                      className="w-full bg-transparent text-sm font-black outline-none dark:text-white"
-                    />
+              {/* Dynamic Attributes */}
+              {selectedCategory?.attributeSchema && selectedCategory.attributeSchema.length > 0 && (
+                <div className="space-y-4">
+                  <label className="text-[8px] font-black uppercase tracking-widest text-zinc-400">
+                    {selectedCategory.name} Details
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedCategory.attributeSchema.map((attr: any) => (
+                      <div key={attr.name} className="rounded-2xl bg-zinc-50 px-4 py-3 ring-1 ring-zinc-100 dark:bg-zinc-800 dark:ring-zinc-700">
+                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-400">
+                          {attr.name}
+                        </p>
+                        {attr.type === 'boolean' ? (
+                          <div className="mt-1 flex gap-2">
+                            {['', 'true', 'false'].map(val => (
+                              <button
+                                key={val}
+                                onClick={() => handleAttributeChange(attr.name, val)}
+                                className={`px-2 py-1 rounded-md text-[9px] font-black ${filters.attributes[attr.name] === val
+                                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-black'
+                                  : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700'}`}
+                              >
+                                {val === '' ? 'Any' : val === 'true' ? 'Yes' : 'No'}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <input
+                            type={attr.type === 'number' ? 'number' : 'text'}
+                            placeholder={attr.type === 'number' ? '0' : '...'}
+                            value={filters.attributes[attr.name] || ''}
+                            onChange={e => handleAttributeChange(attr.name, e.target.value)}
+                            className="w-full bg-transparent text-sm font-black outline-none dark:text-white"
+                          />
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <button

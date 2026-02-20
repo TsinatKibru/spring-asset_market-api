@@ -20,14 +20,15 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
                         "(:location IS NULL OR p.location ILIKE CONCAT('%', :location, '%')) AND " +
                         "(:categoryId IS NULL OR p.category_id = :categoryId) AND " +
                         "(:status IS NULL OR p.status = :status) AND " +
-                        "(:attrKey IS NULL OR p.attributes->>:attrKey = :attrValue) AND " +
+                        "(:attributesJson IS NULL OR p.attributes @> CAST(:attributesJson AS jsonb)) AND " +
                         "p.tenant_id = :tenantId", countQuery = "SELECT count(*) FROM properties p WHERE " +
                                         "(:minPrice IS NULL OR p.price >= :minPrice) AND " +
                                         "(:maxPrice IS NULL OR p.price <= :maxPrice) AND " +
                                         "(:location IS NULL OR p.location ILIKE CONCAT('%', :location, '%')) AND " +
                                         "(:categoryId IS NULL OR p.category_id = :categoryId) AND " +
                                         "(:status IS NULL OR p.status = :status) AND " +
-                                        "(:attrKey IS NULL OR p.attributes->>:attrKey = :attrValue) AND " +
+                                        "(:attributesJson IS NULL OR p.attributes @> CAST(:attributesJson AS jsonb)) AND "
+                                        +
                                         "p.tenant_id = :tenantId", nativeQuery = true)
         Page<Property> findWithFilters(
                         @Param("minPrice") BigDecimal minPrice,
@@ -35,8 +36,7 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
                         @Param("location") String location,
                         @Param("categoryId") Long categoryId,
                         @Param("status") String status,
-                        @Param("attrKey") String attrKey,
-                        @Param("attrValue") String attrValue,
+                        @Param("attributesJson") String attributesJson,
                         @Param("tenantId") String tenantId,
                         Pageable pageable);
 }

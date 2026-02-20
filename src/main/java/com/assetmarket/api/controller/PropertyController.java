@@ -32,12 +32,26 @@ public class PropertyController {
             @io.swagger.v3.oas.annotations.Parameter(description = "Maximum price") @RequestParam(required = false) java.math.BigDecimal maxPrice,
             @io.swagger.v3.oas.annotations.Parameter(description = "Partial location match") @RequestParam(required = false) String location,
             @io.swagger.v3.oas.annotations.Parameter(description = "Property status (AVAILABLE, PENDING, SOLD)") @RequestParam(required = false) com.assetmarket.api.entity.PropertyStatus status,
-            @io.swagger.v3.oas.annotations.Parameter(description = "Dynamic attribute key (e.g., 'bedrooms')") @RequestParam(required = false) String attrKey,
-            @io.swagger.v3.oas.annotations.Parameter(description = "Dynamic attribute value to match") @RequestParam(required = false) String attrValue,
+            @io.swagger.v3.oas.annotations.Parameter(description = "Dynamic attributes (e.g., attr[bedrooms]=3)") @RequestParam(required = false) java.util.Map<String, String> allParams,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDir,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+
+        // Extract attributes (parameters starting with 'attr[')
+        java.util.Map<String, String> attributes = new java.util.HashMap<>();
+        if (allParams != null) {
+            allParams.forEach((key, value) -> {
+                if (key.startsWith("attr[") && key.endsWith("]")) {
+                    String attrKey = key.substring(5, key.length() - 1);
+                    attributes.put(attrKey, value);
+                }
+                // Legacy support for single attrKey/attrValue
+                if (key.equals("attrKey") && allParams.containsKey("attrValue")) {
+                    attributes.put(value, allParams.get("attrValue"));
+                }
+            });
+        }
 
         // Build Sort object
         org.springframework.data.domain.Sort.Direction direction = sortDir.equalsIgnoreCase("ASC")
@@ -50,9 +64,9 @@ public class PropertyController {
 
         // Use search method if any filters are provided
         Page<PropertyDTO> properties;
-        if (minPrice != null || maxPrice != null || location != null || status != null || attrKey != null) {
+        if (minPrice != null || maxPrice != null || location != null || status != null || !attributes.isEmpty()) {
             properties = propertyService.searchProperties(
-                    minPrice, maxPrice, location, category, status, attrKey, attrValue, pageable);
+                    minPrice, maxPrice, location, category, status, attributes, pageable);
         } else {
             properties = propertyService.getAllProperties(category, pageable);
         }
