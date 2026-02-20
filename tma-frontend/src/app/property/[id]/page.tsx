@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useApi } from "@/components/hooks/useApi";
 import { useTelegram } from "@/components/providers/TelegramProvider";
 import { Star, Heart, MessageSquare, Calendar, Package, Bed, Bath, Maximize, Droplets, Warehouse, Home } from "lucide-react";
+import ImageCarousel from "@/components/ImageCarousel";
 
 /**
  * Maps attribute names to Lucide icons for a premium look
@@ -92,7 +93,7 @@ export default function PropertyDetailPage() {
                 title: "Send Inquiry",
                 message: "Ask anything about this property:",
                 buttons: [{ id: "send", type: "default", text: "Send" }, { id: "cancel", type: "cancel" }]
-            }, (btnId) => resolve(btnId === "send"));
+            }, (btnId: string | undefined) => resolve(btnId === "send"));
         });
 
         if (!message) return;
@@ -157,19 +158,10 @@ export default function PropertyDetailPage() {
         <div className="min-h-screen bg-white pb-32 dark:bg-black">
             {/* Image Gallery */}
             <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900">
-                {property.imageUrls && property.imageUrls.length > 0 ? (
-                    <Image
-                        src={property.imageUrls[0]}
-                        alt={property.title}
-                        fill
-                        className="object-cover"
-                        priority
-                    />
-                ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <span className="text-zinc-400 tracking-widest uppercase text-xs font-black">No Preview Available</span>
-                    </div>
-                )}
+                <ImageCarousel
+                    images={property.imageUrls || []}
+                    title={property.title}
+                />
             </div>
 
             <div className="px-6 pt-8">
