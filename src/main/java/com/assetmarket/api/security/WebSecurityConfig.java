@@ -55,6 +55,7 @@ public class WebSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**", "/api/v1/onboard/**", "/api/v1/telegram/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/properties/**",
                                 "/api/v1/categories/**")
                         .permitAll()

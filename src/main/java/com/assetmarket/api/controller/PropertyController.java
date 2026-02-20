@@ -103,8 +103,20 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.updateProperty(id, propertyDTO));
     }
 
+    @PostMapping("/upload")
+    @io.swagger.v3.oas.annotations.Operation(summary = "Upload image (standalone)", description = "Upload a file and get its relative URL without associating it with a property yet")
+    public ResponseEntity<java.util.Map<String, String>> uploadImageOnly(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+
+        String tenantId = TenantContext.getCurrentTenant();
+        String imageUrl = fileUploadService.storeFile(file, tenantId);
+
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("url", imageUrl);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{id}/images")
-    @PreAuthorize("hasRole('ADMIN')")
     @io.swagger.v3.oas.annotations.Operation(summary = "Upload property image", description = "Upload a file and add its URL to the property's image set")
     public ResponseEntity<PropertyDTO> uploadImage(
             @PathVariable Long id,

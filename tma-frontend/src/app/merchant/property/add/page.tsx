@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useApi } from "@/components/hooks/useApi";
 import { useTelegram } from "@/components/providers/TelegramProvider";
 import { ArrowLeft, Save, Plus, X, List, MapPin, DollarSign, FileText } from "lucide-react";
+import ImageUpload from "@/components/ImageUpload";
 
 export default function AddPropertyPage() {
     const router = useRouter();
@@ -187,6 +188,14 @@ export default function AddPropertyPage() {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Image Upload */}
+                <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                    <ImageUpload
+                        value={formData.imageUrls}
+                        onChange={(urls: string[]) => setFormData(prev => ({ ...prev, imageUrls: urls }))}
+                    />
                 </div>
 
                 {/* Dynamic Attributes */}
