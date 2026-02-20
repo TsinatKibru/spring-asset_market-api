@@ -19,11 +19,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!isReady) return;
+        if (!isReady || !webApp) return;
 
         const authenticate = async () => {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/telegram/auth`, {
+                // Determine API base URL
+                const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
+
+                const response = await fetch(`${apiBase}/telegram/auth`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -41,7 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     localStorage.setItem("token", data.accessToken);
 
                     // Fetch full profile including roles
-                    const profileRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+                    const profileRes = await fetch(`${apiBase}/auth/me`, {
                         headers: {
                             "Authorization": `Bearer ${data.accessToken}`,
                             "X-Tenant-ID": tenantId || "default",
@@ -63,7 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
 
         authenticate();
-    }, [isReady, webApp.initData, tenantId]);
+    }, [isReady, webApp?.initData, tenantId]);
 
     return (
         <AuthContext.Provider value={{ token, user, isAuthenticated: !!token, isLoading }}>

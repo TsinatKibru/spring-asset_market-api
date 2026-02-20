@@ -87,6 +87,10 @@ public class AuthController {
         User user = userRepository.findByUsernameAndTenantId(username, currentTenant)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthController.class);
+        log.info("Fetching profile for user: {} in tenant: {}. Roles: {}",
+                user.getUsername(), user.getTenantId(), user.getRoles());
+
         return ResponseEntity.ok(UserResponseDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())

@@ -59,6 +59,7 @@ public class TelegramService {
                     return userRepository.save(newUser);
                 });
 
+        log.info("Authenticated Telegram user: {} (ID: {}) in tenant: {}", user.getUsername(), user.getId(), tenantId);
         return jwtUtils.generateTokenFromUsername(user.getUsername());
     }
 
@@ -167,6 +168,9 @@ public class TelegramService {
         if (text.startsWith("/start")) {
             String[] parts = text.split(" ");
             String tenantId = parts.length > 1 ? parts[1] : "default";
+
+            log.info("Processing /start for tenant: {}. Token length: {}", tenantId,
+                    (botToken != null ? botToken.length() : 0));
 
             String welcomeMsg = String.format("🚀 *Welcome to Asset Marketplace!* \n\n" +
                     "You are accessing the *%s* collection. Browse our premium listings below.",
