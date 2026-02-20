@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useApi } from "@/components/hooks/useApi";
 import { useTelegram } from "@/components/providers/TelegramProvider";
 import { Save, List, MapPin, DollarSign, FileText } from "lucide-react";
+import ImageUpload from "@/components/ImageUpload";
 
 export default function EditPropertyPage() {
     const { id } = useParams();
@@ -204,6 +205,14 @@ export default function EditPropertyPage() {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Image Upload */}
+                <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                    <ImageUpload
+                        value={formData.imageUrls}
+                        onChange={(urls: string[]) => setFormData(prev => ({ ...prev, imageUrls: urls }))}
+                    />
                 </div>
 
                 {selectedCategory && selectedCategory.attributeSchema && selectedCategory.attributeSchema.length > 0 && (
