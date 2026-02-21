@@ -16,23 +16,15 @@ The platform is built around a "Schema-on-Write" dynamic metadata system using P
 ### 📱 Marketplace Experience
 Experience the sleek, native-feel interface of the Telegram Mini App.
 
-````carousel
-![Home Screen](docs/screenshots/home_screen.jpg)
-<!-- slide -->
-![Marketplace Filtering](docs/screenshots/filter_screen.jpg)
-<!-- slide -->
-![Filtering by Category](docs/screenshots/filter_selected.jpg)
-<!-- slide -->
-![Filtered Search Results](docs/screenshots/home_screen_filter_applied.jpg)
-<!-- slide -->
-![Premium Property Detail](docs/screenshots/property_detail.jpg)
-<!-- slide -->
-![Extended Specifications](docs/screenshots/more_property_detail.jpg)
-<!-- slide -->
-![Saved Properties](docs/screenshots/saved_screen.jpg)
-<!-- slide -->
-![User Profile & Settings](docs/screenshots/profile_screen.jpg)
-````
+### 📱 Marketplace Experience
+Experience the sleek, native-feel interface of the Telegram Mini App.
+
+| **Discovery & Search** | **Details & Profile** |
+| :--- | :--- |
+| ![Home Screen](docs/screenshots/home_screen.jpg) | ![Premium Property Detail](docs/screenshots/property_detail.jpg) |
+| ![Marketplace Filtering](docs/screenshots/filter_screen.jpg) | ![Extended Specifications](docs/screenshots/more_property_detail.jpg) |
+| ![Filtering by Category](docs/screenshots/filter_selected.jpg) | ![Saved Properties](docs/screenshots/saved_screen.jpg) |
+| ![Filtered Search Results](docs/screenshots/home_screen_filter_applied.jpg) | ![User Profile & Settings](docs/screenshots/profile_screen.jpg) |
 
 ### 🏗️ Merchant & Management Dashboard
 Full control for property owners and system administrators.
