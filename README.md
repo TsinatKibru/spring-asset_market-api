@@ -5,7 +5,9 @@
 ![JWT](https://img.shields.io/badge/JWT-jjwt-orange)
 ![Tests](https://img.shields.io/badge/Tests-20%20Passing-success)
 
-A production-grade REST API for a property marketplace, featuring robust multi-tenancy isolation, dynamic metadata system, and comprehensive security.
+Asset Market is an enterprise-grade, multi-tenant real estate platform designed for the modern web and mobile-first users. It combines a robust Spring Boot backend with a high-performance Next.js Telegram Mini App (TMA), enabling merchants to manage, list, and sell assets directly within the Telegram ecosystem.
+
+The platform is built around a "Schema-on-Write" dynamic metadata system using PostgreSQL JSONB, allowing different property categories (e.g., Apartments, Land, Luxury Cars) to have entirely different attributes without changing the database schema.
 
 ## 🚀 Key Features
 
