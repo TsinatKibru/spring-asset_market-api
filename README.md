@@ -9,6 +9,42 @@ Asset Market is an enterprise-grade, multi-tenant real estate platform designed 
 
 The platform is built around a "Schema-on-Write" dynamic metadata system using PostgreSQL JSONB, allowing different property categories (e.g., Apartments, Land, Luxury Cars) to have entirely different attributes without changing the database schema.
 
+---
+
+## 📸 Visual Showcase
+
+### 📱 Marketplace Experience
+Experience the sleek, native-feel interface of the Telegram Mini App.
+
+````carousel
+![Home Screen](docs/screenshots/home_screen.jpg)
+<!-- slide -->
+![Marketplace Filtering](docs/screenshots/filter_screen.jpg)
+<!-- slide -->
+![Filtering by Category](docs/screenshots/filter_selected.jpg)
+<!-- slide -->
+![Filtered Search Results](docs/screenshots/home_screen_filter_applied.jpg)
+<!-- slide -->
+![Premium Property Detail](docs/screenshots/property_detail.jpg)
+<!-- slide -->
+![Extended Specifications](docs/screenshots/more_property_detail.jpg)
+<!-- slide -->
+![Saved Properties](docs/screenshots/saved_screen.jpg)
+<!-- slide -->
+![User Profile & Settings](docs/screenshots/profile_screen.jpg)
+````
+
+### 🏗️ Merchant & Management Dashboard
+Full control for property owners and system administrators.
+
+| **Listing Management** | **Advanced Controls** |
+| :--- | :--- |
+| ![Merchant Dashboard](docs/screenshots/merchant_page_approved.jpg) | ![Category Management](docs/screenshots/category_mgmt_page.jpg) |
+| ![Property Management](docs/screenshots/merchant_property_mgmt.jpg) | ![Edit Category Schema](docs/screenshots/category_edit_page.jpg) |
+| ![Edit Listing](docs/screenshots/property_edit_page.jpg) | ![Bot Notifications](docs/screenshots/bot_notifications.jpg) |
+
+---
+
 ## 🚀 Key Features
 
 ### Core Functionality
